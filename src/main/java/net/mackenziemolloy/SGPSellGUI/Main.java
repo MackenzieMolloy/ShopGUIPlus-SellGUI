@@ -12,8 +12,6 @@ public class Main extends JavaPlugin implements Listener {
     public void onEnable() {
         new Commands(this);
 
-        //Bukkit.getServer().getPluginManager().registerEvents(this, this);
-
         this.getLogger().info("*-*");
         this.getLogger().info("ShopGUIPlus SellGUI");
         this.getLogger().info("Made by Mackenzie Molloy");

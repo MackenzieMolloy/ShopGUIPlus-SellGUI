@@ -1,10 +1,5 @@
 /*
 
-    TO-DO LIST
-
-    - Integrate receipt config option
-
-
     IDEAS
     - Inventory Receipt Option
     - Titles for money made (like +$XXXX)
