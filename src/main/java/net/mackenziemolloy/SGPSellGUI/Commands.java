@@ -198,20 +198,25 @@ public class Commands implements CommandExecutor {
                             if(main.configHandler.getYamlConfiguration().getInt("options.receipt_type") == 1 || main.configHandler.getYamlConfiguration().getString("messages.items_sold").contains("{list}")) {
 
                                 player.sendMessage(moneyMap.keySet().toString());
+                                
+                                for(Map.Entry<Material, Map<Short, Integer>> entry : soldMap.entrySet()) {
+                                    for(Map.Entry<Short, Integer> damageEntry : entry.getValue().entrySet()) {
+                                        ItemStack materialItemStack = new ItemStack(entry.getKey(), 1,
+                                          damageEntry.getKey());
 
-                                /* primitive int type should be used */
-                                for (int i = 0; i < soldMap.keySet().toArray().length; i++) {
+                                        double profits = ShopGuiPlusApi.getItemStackPriceSell(player,
+                                          materialItemStack) * damageEntry.getValue();
+                                        String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencyPrefix() + profits + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencySuffix();
 
-                                    String[] itemDamagesAndAmounts = soldMap.values().toArray()[i].toString().subSequence(1,soldMap.values().toArray()[i].toString().length()-1).toString().split("=");
-                                    ItemStack materialItemStack = new ItemStack(Material.matchMaterial(soldMap.keySet().toArray()[i].toString()));
-                                    materialItemStack.setDurability(Short.valueOf(itemDamagesAndAmounts[0]));
+                                        String itemNameFormatted =
+                                          WordUtils.capitalize(materialItemStack.getType().name().replace("_", " ").toLowerCase()) + ":" + damageEntry.getKey();
 
-                                    double profits = ShopGuiPlusApi.getItemStackPriceSell(player, materialItemStack) * Integer.valueOf(itemDamagesAndAmounts[1]);
-                                    String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencyPrefix() + profits + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencySuffix();
+                                        output += "\n" + main.configHandler.getYamlConfiguration().getString(
+                                          "messages.receipt_item_layout").replace("{amount}",
+                                          String.valueOf(damageEntry.getValue())).replace(
+                                            "{item}", itemNameFormatted).replace("{price}", profitsFormatted);
 
-                                    String itemNameFormatted = WordUtils.capitalize(materialItemStack.getType().name().replace("_", " ").toLowerCase());
-
-                                    output = output + "\n" + main.configHandler.getYamlConfiguration().getString("messages.receipt_item_layout").replace("{amount}", itemDamagesAndAmounts[1]).replace("{item}", itemNameFormatted).replace("{price}", profitsFormatted);
+                                    }
                                 }
 
                             }
