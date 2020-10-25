@@ -15,7 +15,6 @@
 */
 package net.mackenziemolloy.SGPSellGUI;
 
-import jdk.nashorn.internal.ir.annotations.Ignore;
 import me.mattstudios.mfgui.gui.guis.Gui;
 import net.brcdev.shopgui.ShopGuiPlusApi;
 import net.brcdev.shopgui.economy.EconomyType;
@@ -26,7 +25,6 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.Warning;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -34,7 +32,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -105,7 +102,6 @@ public class Commands implements CommandExecutor {
 
                                 EconomyType itemEconomyType = getEconomyType(i, (Player) event.getPlayer());
 
-                                //@SuppressWarnings("UnusedAssignment")
                                 Map<Short, Integer> totalSold = soldMap.getOrDefault(material, new HashMap<>());
                                 int totalSoldCount = totalSold.getOrDefault(materialDamage, 0);
                                 int amountSold = (totalSoldCount + amount);
@@ -129,7 +125,6 @@ public class Commands implements CommandExecutor {
                             StringBuilder pricing = new StringBuilder();
 
                             for(Map.Entry<EconomyType, Double> entry : moneyMap.entrySet()) {
-                                /* create local variable to avoid calling all api methods several times */
                                 EconomyProvider economyProvider =
                                         ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(entry.getKey());
                                 economyProvider
