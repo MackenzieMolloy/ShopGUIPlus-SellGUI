@@ -16,6 +16,7 @@ import net.brcdev.shopgui.provider.economy.EconomyProvider;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.milkbowl.vault.chat.Chat;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -70,7 +71,10 @@ public class Commands implements CommandExecutor {
                 Player player = (Player) sender;
 
                 if (sender.hasPermission("sellgui.use")) {
-                    Gui gui = new Gui(4, "Sell GUI");
+
+                    String sellGUITitle = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.sellgui_title"));
+
+                    Gui gui = new Gui(4, sellGUITitle);
 
                     gui.setCloseGuiAction(event -> {
                         Map<Material, Map<Short, Integer>> soldMap = new EnumMap<>(Material.class);

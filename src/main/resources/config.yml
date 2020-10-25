@@ -21,6 +21,7 @@ options:
   receipt_type: 1
 messages:
   no_permission: "&cYou do not have permission"
+  sellgui_title: "&0Sell GUI"
   reloaded_config: "&c[SellGUI] Reloaded configuration files."
   no_items_sold: "&aShop > &fYou didn't have anything sellable."
   #
