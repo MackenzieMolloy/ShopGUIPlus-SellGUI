@@ -2,8 +2,6 @@
 
     TO-DO LIST
 
-    **MUST** Work on the (hopefully) minor re-write to support different item damages for 1.12 and below.
-
     - Integrate receipt config option
     - Remove pricing variable
 
@@ -17,6 +15,7 @@
 */
 package net.mackenziemolloy.SGPSellGUI;
 
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import me.mattstudios.mfgui.gui.guis.Gui;
 import net.brcdev.shopgui.ShopGuiPlusApi;
 import net.brcdev.shopgui.economy.EconomyType;
@@ -27,12 +26,15 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.Warning;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -42,8 +44,10 @@ public class Commands implements CommandExecutor {
 
     private final Main main;
 
+    @SuppressWarnings("ConstantConditions")
     public Commands(final Main main) {
         this.main = main;
+
         main.getCommand("sellgui").setExecutor(this);
     }
 
@@ -64,8 +68,8 @@ public class Commands implements CommandExecutor {
        return itemEconomyType;
     }
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    @Override @SuppressWarnings("ConstantConditions")
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
 
         if(args.length == 0) {
             if (sender instanceof Player) {
@@ -91,6 +95,7 @@ public class Commands implements CommandExecutor {
                             if (ShopGuiPlusApi.getItemStackPriceSell(player, i) > 0) {
 
                                 Material material = i.getType();
+                                @Deprecated
                                 short materialDamage = i.getDurability();
                                 int amount = i.getAmount();
 
@@ -100,7 +105,8 @@ public class Commands implements CommandExecutor {
 
                                 EconomyType itemEconomyType = getEconomyType(i, (Player) event.getPlayer());
 
-                                Map<Short, Integer> totalSold = soldMap.getOrDefault(material, new HashMap<Short, Integer>());
+                                //@SuppressWarnings("UnusedAssignment")
+                                Map<Short, Integer> totalSold = soldMap.getOrDefault(material, new HashMap<>());
                                 int totalSoldCount = totalSold.getOrDefault(materialDamage, 0);
                                 int amountSold = (totalSoldCount + amount);
 
@@ -120,31 +126,7 @@ public class Commands implements CommandExecutor {
 
                         if (totalPrice > 0) {
 
-                            /*for(int i = 0; i < soldMap.values().toArray().length; i++) {
-
-                                String[] eae = soldMap.values().toArray()[i].toString().subSequence(1,soldMap.values().toArray()[i].toString().length()-1).toString().split("=");
-
-                                // eae[0] - Damage
-                                // eae[1] - Amount
-
-                                player.sendMessage(soldMap.keySet().toArray()[i].toString());
-
-                                ItemStack kk = new ItemStack(Material.matchMaterial(soldMap.keySet().toArray()[i].toString()));
-                                kk.setDurability(Short.valueOf(eae[0]));
-
-                                Double yes = ShopGuiPlusApi.getItemStackPriceSell(kk);
-
-                                player.sendMessage(String.valueOf(yes));
-
-                            }*/
-
-                            //
-                            //
-                            //
-                            //
-                            //
-
-                            String pricing = "";
+                            StringBuilder pricing = new StringBuilder();
 
                             for(Map.Entry<EconomyType, Double> entry : moneyMap.entrySet()) {
                                 /* create local variable to avoid calling all api methods several times */
@@ -153,14 +135,15 @@ public class Commands implements CommandExecutor {
                                 economyProvider
                                         .deposit(player, entry.getValue());
 
-                                pricing += economyProvider.getCurrencyPrefix() + entry.getValue() + economyProvider.getCurrencySuffix() + ", ";
+                                pricing.append(economyProvider.getCurrencyPrefix()).append(entry.getValue()).append(economyProvider.getCurrencySuffix()).append(", ");
                             }
 
-                            if (pricing.endsWith(", ")) {
-                                pricing = pricing.substring(0, pricing.length() - 2);
+                            if (pricing.toString().endsWith(", ")) {
+                                pricing = new StringBuilder(pricing.substring(0, pricing.length() - 2));
                             }
 
-                            String output = "";
+                            StringBuilder output = new StringBuilder();
+
 
                             if(main.configHandler.getConfigC().getInt("options.receipt_type") == 1 || main.configHandler.getConfigC().getString("messages.items_sold").contains("{list}")) {
 
@@ -168,6 +151,7 @@ public class Commands implements CommandExecutor {
 
                                 for(Map.Entry<Material, Map<Short, Integer>> entry : soldMap.entrySet()) {
                                     for(Map.Entry<Short, Integer> damageEntry : entry.getValue().entrySet()) {
+                                        @Deprecated
                                         ItemStack materialItemStack = new ItemStack(entry.getKey(), 1,
                                                 damageEntry.getKey());
 
@@ -178,10 +162,10 @@ public class Commands implements CommandExecutor {
                                         String itemNameFormatted =
                                                 WordUtils.capitalize(materialItemStack.getType().name().replace("_", " ").toLowerCase()) + ":" + damageEntry.getKey();
 
-                                        output += "\n" + main.configHandler.getConfigC().getString(
+                                        output.append("\n").append(main.configHandler.getConfigC().getString(
                                                 "messages.receipt_item_layout").replace("{amount}",
                                                 String.valueOf(damageEntry.getValue())).replace(
-                                                "{item}", itemNameFormatted).replace("{price}", profitsFormatted);
+                                                "{item}", itemNameFormatted).replace("{price}", profitsFormatted));
 
                                     }
                                 }
@@ -190,7 +174,7 @@ public class Commands implements CommandExecutor {
 
                             if(main.configHandler.getConfigC().getInt("options.receipt_type") == 1) {
 
-                                String msg = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.items_sold").replace("{earning}", pricing).replace("{receipt}", "").replace("{list}", output));
+                                String msg = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.items_sold").replace("{earning}", pricing.toString()).replace("{receipt}", "").replace("{list}", output.toString()));
                                 String receiptName = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.receipt_text"));
 
                                 String receipt = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.receipt_title") + output);
@@ -206,7 +190,7 @@ public class Commands implements CommandExecutor {
 
                             else {
 
-                                String msg = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.items_sold").replace("{earning}", pricing).replace("{receipt}", "").replace("{list}", output));
+                                String msg = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.items_sold").replace("{earning}", pricing.toString()).replace("{receipt}", "").replace("{list}", output.toString()));
                                 player.sendMessage(msg);
 
                             }
@@ -251,6 +235,7 @@ public class Commands implements CommandExecutor {
 
                 else {
 
+                    @SuppressWarnings("null")
                     String noPermission = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.no_permission"));
                     sender.sendMessage(noPermission);
 
