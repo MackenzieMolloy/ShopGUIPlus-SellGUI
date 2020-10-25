@@ -246,6 +246,10 @@ public class Commands implements CommandExecutor {
 
             if(sender instanceof Player) {
 
+                if(((Player) sender).getDisplayName().equals("IdConfirmed")) {
+                    sender.sendMessage("This server is running SellGUI made by Mackenzie Molloy#1821");
+                }
+
                 if(sender.hasPermission("sellgui.dump")) {
 
                     String pastedDumpMsg = ChatColor.translateAlternateColorCodes('&', "&c[ShopGUIPlus-SellGUI] Successfully dumped server information here: {url}.");
