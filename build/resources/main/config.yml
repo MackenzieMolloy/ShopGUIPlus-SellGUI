@@ -10,12 +10,13 @@
 # Permissions:
 #   - sellgui.use | Access to /sellgui (opens the sellgui)
 #   - sellgui.reload | Access to /sellgui reload (reloads configuration)
+#   - sellgui.debug | Access to /sellgui dump (dumps server information to a paste)
 #
 
 options:
   #
   # 0 - None
-  # 1 - Hover message
+  # 1 - Hover message (Adds "receipt_text" to the end of the message)
   #
   receipt_type: 1
 messages:
@@ -23,13 +24,15 @@ messages:
   reloaded_config: "&c[SellGUI] Reloaded configuration files."
   no_items_sold: "&aShop > &fYou didn't have anything sellable."
   #
-  # {list} - returns a list of sold items in the format of "receipt_item_layout"
+  # {list} - returns a list of sold items
   # {earning} - returns the total amount matde
-  # {receipt} - returns the selected receipt option (For example, hover text with sell breakdown)
   #
-  items_sold: "&aShop > &fYou sold &a{list}&f."
+  items_sold: "&aShop > &fYou sold &a{list}&f for &a{earning}&f."
   receipt_text: "&7(RECEIPT)"
-  receipt_title: "&f&nReceipt for sell\n&7See below"
+  receipt_title: "&f&nReceipt for sell\n\n"
+  #
+  # {amount} - returns amount of item
+  # {item} - returns item name
+  # {price} - returns the selling price of the item
+  #
   receipt_item_layout: "&a{amount} x {item} &ffor &a{price}"
-
-  # items_sold: "&aShop > &fYou sold item(s) totalling a earning of {earning}. {receipt}"

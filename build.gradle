@@ -17,7 +17,6 @@ repositories {
 }
 
 dependencies {
-    //implementation "ch.jalu:configme:1.1.0"
     compileOnly "org.spigotmc:spigot-api:1.15.2-R0.1-SNAPSHOT"
     implementation "me.mattstudios.utils:matt-framework-gui:2.0.2"
     compileOnly 'com.github.brcdev-minecraft:shopgui-api:2.1.0'
@@ -27,7 +26,6 @@ dependencies {
 
 
 shadowJar {
-    //relocate "ch.jalu.configme", "net.mackenziemolloy.SGPSellGUI"
     relocate "me.mattstudios.mfgui", "net.mackenziemolloy.SGPSellGUI"
     minimize()
 

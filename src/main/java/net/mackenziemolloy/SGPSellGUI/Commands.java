@@ -3,7 +3,6 @@
     TO-DO LIST
 
     - Integrate receipt config option
-    - Remove pricing variable
 
 
     IDEAS
@@ -31,8 +30,10 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.PluginDescriptionFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -137,12 +138,11 @@ public class Commands implements CommandExecutor {
                                 pricing = new StringBuilder(pricing.substring(0, pricing.length() - 2));
                             }
 
-                            StringBuilder output = new StringBuilder();
+                            StringBuilder receiptList = new StringBuilder();
+                            StringBuilder itemList = new StringBuilder();
 
 
                             if(main.configHandler.getConfigC().getInt("options.receipt_type") == 1 || main.configHandler.getConfigC().getString("messages.items_sold").contains("{list}")) {
-
-                                player.sendMessage(moneyMap.keySet().toString());
 
                                 for(Map.Entry<Material, Map<Short, Integer>> entry : soldMap.entrySet()) {
                                     for(Map.Entry<Short, Integer> damageEntry : entry.getValue().entrySet()) {
@@ -157,10 +157,12 @@ public class Commands implements CommandExecutor {
                                         String itemNameFormatted =
                                                 WordUtils.capitalize(materialItemStack.getType().name().replace("_", " ").toLowerCase()) + ":" + damageEntry.getKey();
 
-                                        output.append("\n").append(main.configHandler.getConfigC().getString(
+                                        receiptList.append("\n").append(main.configHandler.getConfigC().getString(
                                                 "messages.receipt_item_layout").replace("{amount}",
                                                 String.valueOf(damageEntry.getValue())).replace(
                                                 "{item}", itemNameFormatted).replace("{price}", profitsFormatted));
+
+                                        itemList.append(itemNameFormatted).append(", ");
 
                                     }
                                 }
@@ -169,10 +171,10 @@ public class Commands implements CommandExecutor {
 
                             if(main.configHandler.getConfigC().getInt("options.receipt_type") == 1) {
 
-                                String msg = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.items_sold").replace("{earning}", pricing.toString()).replace("{receipt}", "").replace("{list}", output.toString()));
+                                String msg = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.items_sold").replace("{earning}", pricing.toString()).replace("{receipt}", "").replace("{list}", itemList.substring(0, itemList.length()-2)));
                                 String receiptName = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.receipt_text"));
 
-                                String receipt = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.receipt_title") + output);
+                                String receipt = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.receipt_title") + receiptList);
                                 TextComponent test = new TextComponent(" " + receiptName);
                                 test.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                         new ComponentBuilder(receipt).create()));
@@ -185,7 +187,7 @@ public class Commands implements CommandExecutor {
 
                             else {
 
-                                String msg = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.items_sold").replace("{earning}", pricing.toString()).replace("{receipt}", "").replace("{list}", output.toString()));
+                                String msg = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.items_sold").replace("{earning}", pricing.toString()).replace("{receipt}", "").replace("{list}", itemList.substring(0, itemList.length()-2)));
                                 player.sendMessage(msg);
 
                             }
@@ -213,7 +215,6 @@ public class Commands implements CommandExecutor {
 
             }
         }
-
 
         else if(args[0].toLowerCase().equals("reload") || args[0].toLowerCase().equals("rl")) {
 
@@ -244,6 +245,93 @@ public class Commands implements CommandExecutor {
                 main.getServer().getConsoleSender().sendMessage(configReloadedMsg);
 
             }
+        }
+
+        else if(args[0].toLowerCase().equals("debug") || args[0].toLowerCase().equals("dump")) {
+
+            if(sender instanceof Player) {
+
+                if(sender.hasPermission("sellgui.dump")) {
+
+                    String pastedDumpMsg = ChatColor.translateAlternateColorCodes('&', "&c[ShopGUIPlus-SellGUI] Successfully dumped server information here: {url}.");
+
+                    Hastebin hastebin = new Hastebin();
+
+                    StringBuilder pluginList = new StringBuilder();
+
+                    for (int i = 0; i < main.getServer().getPluginManager().getPlugins().length; i++) {
+
+                        @NotNull PluginDescriptionFile plugin = main.getServer().getPluginManager().getPlugins()[i].getDescription();
+
+                        pluginList.append("\n- ").append(plugin.getName()).append(" [").append(plugin.getVersion()).append("] by ").append(plugin.getAuthors());
+
+
+
+                    }
+
+                    String text = "| System Information\n\n- OS Type: " + System.getProperty("os.name") + "\n- OS Version: " +
+                            System.getProperty("os.version") + " (" + System.getProperty("os.arch") + ")\n- Processor: " + System.getenv("PROCESSOR_IDENTIFIER")
+                            + "\n\n| Server Information\n\n- Version: " + main.getServer().getBukkitVersion() + "\n- Online Mode: "
+                            + main.getServer().getOnlineMode() + "\n- Memory Usage: " + (Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/(1048576) + "/"
+                            + Runtime.getRuntime().maxMemory()/(1048576) + "MB\n\n| Plugins\n" + pluginList + "\n\n| Plugin Configuration\n\n" + main.configHandler.getConfigC().saveToString();
+
+                    boolean raw = true;
+
+                    try {
+                        String url = hastebin.post(text, raw);
+                        main.getServer().getConsoleSender().sendMessage(pastedDumpMsg.replace("{url}", url));
+                        sender.sendMessage(pastedDumpMsg.replace("{url}", url));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+
+                else {
+
+                    @SuppressWarnings("null")
+                    String noPermission = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.no_permission"));
+                    sender.sendMessage(noPermission);
+
+                }
+
+            }
+
+            else {
+
+                String pastedDumpMsg = ChatColor.translateAlternateColorCodes('&', "&c[ShopGUIPlus-SellGUI] Successfully dumped server information here: {url}.");
+
+                Hastebin hastebin = new Hastebin();
+
+                StringBuilder pluginList = new StringBuilder();
+
+                for (int i = 0; i < main.getServer().getPluginManager().getPlugins().length; i++) {
+
+                    @NotNull PluginDescriptionFile plugin = main.getServer().getPluginManager().getPlugins()[i].getDescription();
+
+                    pluginList.append("\n- ").append(plugin.getName()).append(" [").append(plugin.getVersion()).append("] by ").append(plugin.getAuthors());
+
+
+
+                }
+
+                String text = "| System Information\n\n- OS Type: " + System.getProperty("os.name") + "\n- OS Version: " +
+                        System.getProperty("os.version") + " (" + System.getProperty("os.arch") + ")\n- Processor: " + System.getenv("PROCESSOR_IDENTIFIER")
+                        + "\n\n| Server Information\n\n- Version: " + main.getServer().getBukkitVersion() + "\n- Online Mode: "
+                        + main.getServer().getOnlineMode() + "\n- Memory Usage: " + (Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/(1048576) + "/"
+                        + Runtime.getRuntime().maxMemory()/(1048576) + "\n\n| Plugins\n" + pluginList + "\n\n| Plugin Configuration\n\n" + main.configHandler.getConfigC().saveToString();
+
+                boolean raw = true;
+
+                try {
+                    String url = hastebin.post(text, raw);
+                    main.getServer().getConsoleSender().sendMessage(pastedDumpMsg.replace("{url}", url));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
         }
 
         return false;
