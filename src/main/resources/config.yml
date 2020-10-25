@@ -1,0 +1,35 @@
+#
+#     ____  _____ _     _     ____ _   _ ___
+#    / ___|| ____| |   | |   / ___| | | |_ _|
+#    \___ \|  _| | |   | |  | |  _| | | || |
+#     ___) | |___| |___| |__| |_| | |_| || |
+#    |____/|_____|_____|_____\____|\___/|___|
+#         ( By Mackenzie Molloy#1821 )
+
+#
+# Permissions:
+#   - sellgui.use | Access to /sellgui (opens the sellgui)
+#   - sellgui.reload | Access to /sellgui reload (reloads configuration)
+#
+
+options:
+  #
+  # 0 - None
+  # 1 - Hover message
+  #
+  receipt_type: 1
+messages:
+  no_permission: "&cYou do not have permission"
+  reloaded_config: "&c[SellGUI] Reloaded configuration files."
+  no_items_sold: "&aShop > &fYou didn't have anything sellable."
+  #
+  # {list} - returns a list of sold items in the format of "receipt_item_layout"
+  # {earning} - returns the total amount matde
+  # {receipt} - returns the selected receipt option (For example, hover text with sell breakdown)
+  #
+  items_sold: "&aShop > &fYou sold &a{list}&f."
+  receipt_text: "&7(RECEIPT)"
+  receipt_title: "&f&nReceipt for sell\n&7See below"
+  receipt_item_layout: "&a{amount} x {item} &ffor &a{price}"
+
+  # items_sold: "&aShop > &fYou sold item(s) totalling a earning of {earning}. {receipt}"
