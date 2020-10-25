@@ -20,6 +20,7 @@ package net.mackenziemolloy.SGPSellGUI;
 import me.mattstudios.mfgui.gui.guis.Gui;
 import net.brcdev.shopgui.ShopGuiPlusApi;
 import net.brcdev.shopgui.economy.EconomyType;
+import net.brcdev.shopgui.provider.economy.EconomyProvider;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -77,6 +78,8 @@ public class Commands implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 
+        /* there are too many nested if/elses, their contents should be split into several separate private methods
+        for clarity */
         if(args.length == 0) {
             if (sender instanceof Player) {
 
@@ -101,7 +104,8 @@ public class Commands implements CommandExecutor {
                             if (ShopGuiPlusApi.getItemStackPriceSell(player, i) > 0) {
 
                                 Material material = i.getType();
-                                Short materialDamage = i.getDurability();
+                                short /* primite type should be used everywhere it's possible (eg. except
+                                collections) */ materialDamage = i.getDurability();
                                 int amount = i.getAmount();
 
                                 double itemSellPrice = ShopGuiPlusApi.getItemStackPriceSell(player, i) * amount;
@@ -113,27 +117,18 @@ public class Commands implements CommandExecutor {
                                 if (itemEconomyType == null) {
                                     String defaultEconomyType = ShopGuiPlusApi.getPlugin().getEconomyManager().getDefaultEconomyProvider().getName().toUpperCase();
 
-                                    if (defaultEconomyType.equals("CUSTOM")) {
-                                        itemEconomyType = EconomyType.CUSTOM;
-                                    } else if (defaultEconomyType.equals("EXP")) {
-                                        itemEconomyType = EconomyType.EXP;
-                                    } else if (defaultEconomyType.equals("MYSQL_TOKENS")) {
-                                        itemEconomyType = EconomyType.MYSQL_TOKENS;
-                                    } else if (defaultEconomyType.equals("PLAYER_POINTS")) {
-                                        itemEconomyType = EconomyType.PLAYER_POINTS;
-                                    } else if (defaultEconomyType.equals("TOKEN_ENCHANT")) {
-                                        itemEconomyType = EconomyType.TOKEN_ENCHANT;
-                                    } else if (defaultEconomyType.equals("TOKEN_MANAGER")) {
-                                        itemEconomyType = EconomyType.TOKEN_MANAGER;
-                                    } else if (defaultEconomyType.equals("VAULT")) {
-                                        itemEconomyType = EconomyType.VAULT;
-                                    } else {
-                                        event.getPlayer().sendMessage("§cOops... something went wrong when processing the economy type. Please contact a server administrator.");
+                                    /* much simpler way */
+                                    try {
+                                      itemEconomyType = EconomyType.valueOf(defaultEconomyType);
+                                    } catch(IllegalArgumentException ex) {
+                                      event.getPlayer().sendMessage("§cOops... something went wrong when processing " +
+                                       "the economy type. Please contact a server administrator.");
                                     }
-
                                 }
 
-                                Map<Short, Integer> totalSold = soldMap.getOrDefault(material, new HashMap<Short, Integer>());
+                                /* types aren't necessary in this HashMap declaration (see more "java diamond
+                                expressions") */
+                                Map<Short, Integer> totalSold = soldMap.getOrDefault(material, new HashMap<>());
                                 int totalSoldCount = totalSold.getOrDefault(materialDamage, 0);
                                 int amountSold = (totalSoldCount + amount);
 
@@ -182,27 +177,33 @@ public class Commands implements CommandExecutor {
                             //
 
                             String pricing = "";
+                            /* refactored entire loop for better clarity */
+                            for(Map.Entry<EconomyType, Double> entry : moneyMap.entrySet()) {
+                                /* create local variable to avoid calling all api methods several times */
+                                EconomyProvider economyProvider =
+                                  ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(entry.getKey());
+                                economyProvider
+                                  .deposit(player, entry.getValue());
 
-                            for (Integer a = 0; a < moneyMap.values().toArray().length; a++) {
-                                ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider((EconomyType) moneyMap.keySet().toArray()[a]).deposit(player, (double) moneyMap.values().toArray()[a]);
+                                pricing += economyProvider.getCurrencyPrefix() + entry.getValue() + economyProvider.getCurrencySuffix() + ", ";
+                            }
 
-                                if (a != (moneyMap.values().toArray().length - 1)) {
-                                    pricing = pricing + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider((EconomyType) moneyMap.keySet().toArray()[a]).getCurrencyPrefix() + moneyMap.values().toArray()[a] + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider((EconomyType) moneyMap.keySet().toArray()[a]).getCurrencySuffix() + ", ";
-                                } else {
-                                    pricing = pricing + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider((EconomyType) moneyMap.keySet().toArray()[a]).getCurrencyPrefix() + moneyMap.values().toArray()[a] + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider((EconomyType) moneyMap.keySet().toArray()[a]).getCurrencySuffix() + "";
-                                }
+                            /* easiest way to handle the trailing comma */
+                            if (pricing.endsWith(", ")) {
+                                pricing = pricing.substring(0, pricing.length() - 2);
                             }
 
                             String output = "";
 
-                            if(main.configHandler.getConfigC().getInt("options.receipt_type") == 1 || main.configHandler.getConfigC().getString("messages.items_sold").contains("{list}")) {
+                            if(main.configHandler.getYamlConfiguration().getInt("options.receipt_type") == 1 || main.configHandler.getYamlConfiguration().getString("messages.items_sold").contains("{list}")) {
 
                                 player.sendMessage(moneyMap.keySet().toString());
 
-                                for (Integer i = 0; i < soldMap.keySet().toArray().length; i++) {
+                                /* primitive int type should be used */
+                                for (int i = 0; i < soldMap.keySet().toArray().length; i++) {
 
                                     String[] itemDamagesAndAmounts = soldMap.values().toArray()[i].toString().subSequence(1,soldMap.values().toArray()[i].toString().length()-1).toString().split("=");
-                                    ItemStack materialItemStack = new ItemStack(Material.matchMaterial(soldMap.keySet().toArray()[i].toString()));;
+                                    ItemStack materialItemStack = new ItemStack(Material.matchMaterial(soldMap.keySet().toArray()[i].toString()));
                                     materialItemStack.setDurability(Short.valueOf(itemDamagesAndAmounts[0]));
 
                                     double profits = ShopGuiPlusApi.getItemStackPriceSell(player, materialItemStack) * Integer.valueOf(itemDamagesAndAmounts[1]);
@@ -210,17 +211,17 @@ public class Commands implements CommandExecutor {
 
                                     String itemNameFormatted = WordUtils.capitalize(materialItemStack.getType().name().replace("_", " ").toLowerCase());
 
-                                    output = output + "\n" + main.configHandler.getConfigC().getString("messages.receipt_item_layout").replace("{amount}", itemDamagesAndAmounts[1]).replace("{item}", itemNameFormatted).replace("{price}", profitsFormatted);
+                                    output = output + "\n" + main.configHandler.getYamlConfiguration().getString("messages.receipt_item_layout").replace("{amount}", itemDamagesAndAmounts[1]).replace("{item}", itemNameFormatted).replace("{price}", profitsFormatted);
                                 }
 
                             }
 
-                            if(main.configHandler.getConfigC().getInt("options.receipt_type") == 1) {
+                            if(main.configHandler.getYamlConfiguration().getInt("options.receipt_type") == 1) {
 
-                                String msg = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.items_sold").replace("{earning}", pricing).replace("{receipt}", "").replace("{list}", output));
-                                String receiptName = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.receipt_text"));
+                                String msg = ChatColor.translateAlternateColorCodes('&', main.configHandler.getYamlConfiguration().getString("messages.items_sold").replace("{earning}", pricing).replace("{receipt}", "").replace("{list}", output));
+                                String receiptName = ChatColor.translateAlternateColorCodes('&', main.configHandler.getYamlConfiguration().getString("messages.receipt_text"));
 
-                                String receipt = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.receipt_title") + output);
+                                String receipt = ChatColor.translateAlternateColorCodes('&', main.configHandler.getYamlConfiguration().getString("messages.receipt_title") + output);
                                 TextComponent test = new TextComponent(" " + receiptName);
                                 test.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                         new ComponentBuilder(receipt).create()));
@@ -233,7 +234,7 @@ public class Commands implements CommandExecutor {
 
                             else {
 
-                                String msg = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.items_sold").replace("{earning}", pricing).replace("{receipt}", "").replace("{list}", output));
+                                String msg = ChatColor.translateAlternateColorCodes('&', main.configHandler.getYamlConfiguration().getString("messages.items_sold").replace("{earning}", pricing).replace("{receipt}", "").replace("{list}", output));
                                 player.sendMessage(msg);
 
                             }
@@ -241,7 +242,7 @@ public class Commands implements CommandExecutor {
 
                         } else {
 
-                            String msg = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.no_items_sold"));
+                            String msg = ChatColor.translateAlternateColorCodes('&', main.configHandler.getYamlConfiguration().getString("messages.no_items_sold"));
                             player.sendMessage(msg);
 
                         }
@@ -251,8 +252,9 @@ public class Commands implements CommandExecutor {
                     gui.open(player);
                 } else {
 
-                    String NoPermission = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.no_permission"));
-                    sender.sendMessage(NoPermission);
+                    /* variable names should start with lowercase */
+                    String noPermission = ChatColor.translateAlternateColorCodes('&', main.configHandler.getYamlConfiguration().getString("messages.no_permission"));
+                    sender.sendMessage(noPermission);
 
                 }
             } else {
@@ -265,21 +267,21 @@ public class Commands implements CommandExecutor {
 
         else if(args[0].toLowerCase().equals("reload") || args[0].toLowerCase().equals("rl")) {
 
-            String configReloadedMsg = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.reloaded_config"));
+            String configReloadedMsg = ChatColor.translateAlternateColorCodes('&', main.configHandler.getYamlConfiguration().getString("messages.reloaded_config"));
 
             if(sender instanceof Player) {
 
                 if (sender.hasPermission("sellgui.reload")) {
 
-                    main.configHandler.reloadConfigC();
+                    main.configHandler.reloadYamlConfiguration();
                     sender.sendMessage(configReloadedMsg);
 
                 }
 
                 else {
-
-                    String NoPermission = ChatColor.translateAlternateColorCodes('&', main.configHandler.getConfigC().getString("messages.no_permission"));
-                    sender.sendMessage(NoPermission);
+                    /* variable names should start with lowercase */
+                    String noPermission = ChatColor.translateAlternateColorCodes('&', main.configHandler.getYamlConfiguration().getString("messages.no_permission"));
+                    sender.sendMessage(noPermission);
 
                 }
 
@@ -287,7 +289,7 @@ public class Commands implements CommandExecutor {
 
             else {
 
-                main.configHandler.reloadConfigC();
+                main.configHandler.reloadYamlConfiguration();
                 main.getServer().getConsoleSender().sendMessage(configReloadedMsg);
 
             }

@@ -11,7 +11,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 public class Config {
 
     private File config = null;
-    private YamlConfiguration configC = new YamlConfiguration();
+    private YamlConfiguration yamlConfiguration /* more meaningful variable name should be used */ = new
+    YamlConfiguration();
 
     private File data = null;
     private YamlConfiguration dataC = new YamlConfiguration();
@@ -31,17 +32,17 @@ public class Config {
 
     }
 
-    public YamlConfiguration getConfigC(){
-        return configC;
+    public YamlConfiguration getYamlConfiguration(){
+        return yamlConfiguration;
     }
 
-    public void reloadConfigC() {
-        configC = YamlConfiguration.loadConfiguration(config);
+    public void reloadYamlConfiguration() {
+        yamlConfiguration = YamlConfiguration.loadConfiguration(config);
     }
 
     public void saveConfigC() {
         try {
-            configC.save(config);
+            yamlConfiguration.save(config);
         } catch (IOException e) {
             Bukkit.getConsoleSender().sendMessage(" ");
             Bukkit.getConsoleSender().sendMessage("§cShopGUIPlus SellGUI config failed to save.");
@@ -53,7 +54,7 @@ public class Config {
 
     public void loadYAML() {
         try {
-            configC.load(config);
+            yamlConfiguration.load(config);
         } catch (IOException | InvalidConfigurationException e) {
             e.printStackTrace();
         }

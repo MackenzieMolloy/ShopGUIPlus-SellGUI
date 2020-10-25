@@ -22,7 +22,8 @@ public class Main extends JavaPlugin implements Listener {
         String version = "";
         try {
             version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
-        } catch (ArrayIndexOutOfBoundsException whatVersionAreYouUsingException) {
+        } catch (ArrayIndexOutOfBoundsException ignored  /* it's good to name it 'ignored' when catch block is empty so
+        IDEs/static code analysis don't complain */) {
         }
         getLogger().info("Your server is running version " + version);
 
