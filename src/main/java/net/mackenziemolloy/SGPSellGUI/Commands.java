@@ -95,7 +95,7 @@ public class Commands implements CommandExecutor {
                                 short materialDamage = i.getDurability();
                                 int amount = i.getAmount();
 
-                                double itemSellPrice = ShopGuiPlusApi.getItemStackPriceSell(player, i) * amount;
+                                double itemSellPrice = ShopGuiPlusApi.getItemStackPriceSell(player, i);
 
                                 totalPrice = totalPrice + itemSellPrice;
 
