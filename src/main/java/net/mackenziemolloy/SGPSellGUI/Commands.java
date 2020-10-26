@@ -63,12 +63,14 @@ public class Commands implements CommandExecutor {
 
     @Override @SuppressWarnings("ConstantConditions")
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-
         if(args.length == 0) {
             if (sender instanceof Player) {
-
+                    
                 Player player = (Player) sender;
-
+                if (player.getGamemode() == Gamemode.CREATIVE) {
+                    sender.sendMessage("Configurable message?");
+                    return false;
+                }
                 if (sender.hasPermission("sellgui.use")) {
 
                     String sellGUITitle = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.sellgui_title"));
