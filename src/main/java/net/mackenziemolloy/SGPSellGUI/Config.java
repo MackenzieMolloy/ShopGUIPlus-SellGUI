@@ -16,16 +16,16 @@ public class Config {
     private File data = null;
     private YamlConfiguration dataC = new YamlConfiguration();
 
-    private final Main main;
+    private final SellGUI sellGUI;
 
-    public Config(Main main) {
-        this.main = main;
+    public Config(SellGUI sellGUI) {
+        this.sellGUI = sellGUI;
         generateFiles();
     }
 
     public void generateFiles() {
 
-        config = new File(main.getDataFolder(), "config.yml");
+        config = new File(sellGUI.getDataFolder(), "config.yml");
         generateConfigurations();
         loadYAML();
 
@@ -61,7 +61,7 @@ public class Config {
 
     public void generateConfigurations() {
         if(!config.exists()) {
-            main.saveResource("config.yml", false);
+            sellGUI.saveResource("config.yml", false);
         }
     }
 
