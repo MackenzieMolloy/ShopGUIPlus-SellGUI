@@ -1,5 +1,7 @@
 /*
 
+    TITLES: player.sendTitle("title", "subTitle"); - need to do ChatColor.Translate... to paste colour
+
     IDEAS
     - Inventory Receipt Option
     - Titles for money made (like +$XXXX)
@@ -27,10 +29,12 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Commands implements CommandExecutor {
@@ -61,7 +65,7 @@ public class Commands implements CommandExecutor {
        return itemEconomyType;
     }
 
-    @Override @SuppressWarnings("ConstantConditions")
+    @Override @SuppressWarnings("ConstantConditions") @Deprecated
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
 
         if(args.length == 0) {
@@ -70,6 +74,20 @@ public class Commands implements CommandExecutor {
                 Player player = (Player) sender;
 
                 if (sender.hasPermission("sellgui.use")) {
+
+                    List gamemodesList = ShopGuiPlusApi.getPlugin().getConfigMain().getConfig().getStringList("disableShopsInGamemodes");
+
+                    int serverVersion = Integer.valueOf(sellGUI.getServer().getVersion().split("MC: ")[1].subSequence(0, sellGUI.getServer().getVersion().split("MC: ")[1].length()-1).toString().split("\\.")[1]);
+
+                    if(gamemodesList.contains(player.getGameMode().name()) && !player.hasPermission("shopguiplus.bypassgamemode")) {
+
+                        String gamemodeFormatted = WordUtils.capitalize(player.getGameMode().toString().toLowerCase());
+                        String gamemodeNotAllowed = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.gamemode_not_allowed").replace("{gamemode}", gamemodeFormatted));
+
+                        player.sendMessage(gamemodeNotAllowed);
+                        return true;
+
+                    }
 
                     String sellGUITitle = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.sellgui_title"));
 
@@ -80,6 +98,7 @@ public class Commands implements CommandExecutor {
                         Map<EconomyType, Double> moneyMap = new EnumMap<>(EconomyType.class);
 
                         double totalPrice = 0;
+                        int itemAmount = 0;
 
                         Inventory items = event.getInventory();
 
@@ -89,6 +108,8 @@ public class Commands implements CommandExecutor {
                             if (i == null) continue;
 
                             if (ShopGuiPlusApi.getItemStackPriceSell(player, i) > 0) {
+
+                                itemAmount += i.getAmount();
 
                                 Material material = i.getType();
                                 @Deprecated
@@ -152,8 +173,10 @@ public class Commands implements CommandExecutor {
                                                 materialItemStack) * damageEntry.getValue();
                                         String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencyPrefix() + profits + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencySuffix();
 
-                                        String itemNameFormatted =
-                                                WordUtils.capitalize(materialItemStack.getType().name().replace("_", " ").toLowerCase()) + ":" + damageEntry.getKey();
+
+                                        String itemNameFormatted = WordUtils.capitalize(materialItemStack.getType().name().replace("_", " ").toLowerCase());
+
+                                        if(serverVersion <= 12) itemNameFormatted += ":" + damageEntry.getKey();
 
                                         receiptList.append("\n").append(sellGUI.configHandler.getConfigC().getString(
                                                 "messages.receipt_item_layout").replace("{amount}",
@@ -161,6 +184,7 @@ public class Commands implements CommandExecutor {
                                                 "{item}", itemNameFormatted).replace("{price}", profitsFormatted));
 
                                         itemList.append(itemNameFormatted).append(", ");
+
 
                                     }
                                 }
@@ -187,6 +211,15 @@ public class Commands implements CommandExecutor {
 
                                 String msg = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.items_sold").replace("{earning}", pricing.toString()).replace("{receipt}", "").replace("{list}", itemList.substring(0, itemList.length()-2)));
                                 player.sendMessage(msg);
+
+                            }
+
+                            if(sellGUI.configHandler.getConfigC().getBoolean("options.sell_titles")) {
+
+                                @Nullable String sellTitle = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.sell_title").replace("{earning}", pricing.toString()).replace("{amount}", String.valueOf(itemAmount)));
+                                @Nullable String sellSubtitle = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.sell_subtitle").replace("{earning}", pricing.toString()).replace("{amount}", String.valueOf(itemAmount)));
+
+                                player.sendTitle(sellTitle, sellSubtitle);
 
                             }
 
