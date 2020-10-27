@@ -19,6 +19,7 @@ options:
   # 1 - Hover message (Adds "receipt_text" to the end of the message)
   #
   receipt_type: 1
+  sell_titles: true
 messages:
   no_permission: "&cYou do not have permission"
   sellgui_title: "&0Sell GUI"
@@ -26,7 +27,7 @@ messages:
   no_items_sold: "&aShop > &fYou didn't have anything sellable."
   #
   # {list} - returns a list of sold items
-  # {earning} - returns the total amount matde
+  # {earning} - returns the total amount made
   #
   items_sold: "&aShop > &fYou sold &a{list}&f for &a{earning}&f."
   receipt_text: "&7(RECEIPT)"
@@ -37,3 +38,10 @@ messages:
   # {price} - returns the selling price of the item
   #
   receipt_item_layout: "&a{amount} x {item} &ffor &a{price}"
+  #
+  # {amount} - returns out of items sold
+  # {earning} - returns the total amount made
+  #
+  sell_title: "&a&l+{earning}"
+  sell_subtitle: "&7You sold &a&n{amount}&7 items in this batch"
+  gamemode_not_allowed: "&aShop > &fYou are not allowed to use the Sell GUI in &a{gamemode} mode&f."

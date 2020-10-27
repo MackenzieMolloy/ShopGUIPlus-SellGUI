@@ -1,12 +1,8 @@
 /*
 
-    TITLES: player.sendTitle("title", "subTitle"); - need to do ChatColor.Translate... to paste colour
-
     IDEAS
     - Inventory Receipt Option
-    - Titles for money made (like +$XXXX)
     - Any other ideas?
-
 
 */
 package net.mackenziemolloy.SGPSellGUI;
