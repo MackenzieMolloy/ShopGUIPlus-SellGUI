@@ -2,6 +2,7 @@
 
     IDEAS
     - Inventory Receipt Option
+    - Sell price fetch command (like hold item, it says sell price)
     - Any other ideas?
 
 */
@@ -28,10 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Commands implements CommandExecutor {
 
@@ -90,14 +88,15 @@ public class Commands implements CommandExecutor {
                     Gui gui = new Gui(4, sellGUITitle);
 
                     gui.setCloseGuiAction(event -> {
-                        Map<Material, Map<Short, Integer>> soldMap = new EnumMap<>(Material.class);
+
+                        final Map<Material, Map<Short, Integer>>[] soldMap = new Map[]{new EnumMap<>(Material.class)};
                         Map<EconomyType, Double> moneyMap = new EnumMap<>(EconomyType.class);
 
                         double totalPrice = 0;
                         int itemAmount = 0;
 
                         Inventory items = event.getInventory();
-
+                        final Boolean[] ExcessItems = {false};
 
                         for (ItemStack i : items) {
 
@@ -118,21 +117,35 @@ public class Commands implements CommandExecutor {
 
                                 EconomyType itemEconomyType = getEconomyType(i, (Player) event.getPlayer());
 
-                                Map<Short, Integer> totalSold = soldMap.getOrDefault(material, new HashMap<>());
+                                Map<Short, Integer> totalSold = soldMap[0].getOrDefault(material, new HashMap<>());
                                 int totalSoldCount = totalSold.getOrDefault(materialDamage, 0);
                                 int amountSold = (totalSoldCount + amount);
 
                                 totalSold.put(materialDamage, amountSold);
-                                soldMap.put(material, totalSold);
+                                soldMap[0].put(material, totalSold);
 
                                 double totalSold2 = moneyMap.getOrDefault(itemEconomyType, 0.0);
                                 double amountSold2 = (totalSold2 + itemSellPrice);
                                 moneyMap.put(itemEconomyType, amountSold2);
 
 
-                            } else {
-                                event.getPlayer().getInventory().addItem(i);
                             }
+                            else {
+
+                                final Map<Integer, ItemStack> fallenItems = event.getPlayer().getInventory().addItem(i);
+                                fallenItems.values().forEach(item -> {
+                                    event.getPlayer().getWorld().dropItemNaturally(event.getPlayer().getLocation().add(0, 0.5, 0), item);
+                                    ExcessItems[0] = true;
+                                });
+
+                            }
+
+                        }
+
+                        if(ExcessItems[0]) {
+
+                            String ExcessItemsMsg = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.inventory_full"));
+                            player.sendMessage(ExcessItemsMsg);
 
                         }
 
@@ -159,7 +172,7 @@ public class Commands implements CommandExecutor {
 
                             if(sellGUI.configHandler.getConfigC().getInt("options.receipt_type") == 1 || sellGUI.configHandler.getConfigC().getString("messages.items_sold").contains("{list}")) {
 
-                                for(Map.Entry<Material, Map<Short, Integer>> entry : soldMap.entrySet()) {
+                                for(Map.Entry<Material, Map<Short, Integer>> entry : soldMap[0].entrySet()) {
                                     for(Map.Entry<Short, Integer> damageEntry : entry.getValue().entrySet()) {
                                         @Deprecated
                                         ItemStack materialItemStack = new ItemStack(entry.getKey(), 1,
@@ -218,7 +231,6 @@ public class Commands implements CommandExecutor {
                                 player.sendTitle(sellTitle, sellSubtitle);
 
                             }
-
 
                         } else {
 

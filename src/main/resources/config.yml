@@ -45,3 +45,4 @@ messages:
   sell_title: "&a&l+{earning}"
   sell_subtitle: "&7You sold &a&n{amount}&7 items in this batch"
   gamemode_not_allowed: "&aShop > &fYou are not allowed to use the Sell GUI in &a{gamemode} mode&f."
+  inventory_full: "&aShop > &fYour inventory is currently full, so excess items have been dropped on the ground."
