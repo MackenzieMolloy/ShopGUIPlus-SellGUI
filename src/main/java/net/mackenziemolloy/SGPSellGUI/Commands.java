@@ -89,7 +89,8 @@ public class Commands implements CommandExecutor {
 
                     gui.setCloseGuiAction(event -> {
 
-                        final Map<Material, Map<Short, Integer>>[] soldMap = new Map[]{new EnumMap<>(Material.class)};
+                        final Map<ItemStack, Map<Short, Integer>> soldMap2 = new HashMap<>();
+
                         Map<EconomyType, Double> moneyMap = new EnumMap<>(EconomyType.class);
 
                         double totalPrice = 0;
@@ -106,7 +107,6 @@ public class Commands implements CommandExecutor {
 
                                 itemAmount += i.getAmount();
 
-                                Material material = i.getType();
                                 @Deprecated
                                 short materialDamage = i.getDurability();
                                 int amount = i.getAmount();
@@ -117,12 +117,15 @@ public class Commands implements CommandExecutor {
 
                                 EconomyType itemEconomyType = getEconomyType(i, (Player) event.getPlayer());
 
-                                Map<Short, Integer> totalSold = soldMap[0].getOrDefault(material, new HashMap<>());
+                                ItemStack SingleItemStack = new ItemStack(i);
+                                SingleItemStack.setAmount(1);
+
+                                Map<Short, Integer> totalSold = soldMap2.getOrDefault(SingleItemStack, new HashMap<>());
                                 int totalSoldCount = totalSold.getOrDefault(materialDamage, 0);
                                 int amountSold = (totalSoldCount + amount);
 
                                 totalSold.put(materialDamage, amountSold);
-                                soldMap[0].put(material, totalSold);
+                                soldMap2.put(SingleItemStack, totalSold);
 
                                 double totalSold2 = moneyMap.getOrDefault(itemEconomyType, 0.0);
                                 double amountSold2 = (totalSold2 + itemSellPrice);
@@ -172,18 +175,18 @@ public class Commands implements CommandExecutor {
 
                             if(sellGUI.configHandler.getConfigC().getInt("options.receipt_type") == 1 || sellGUI.configHandler.getConfigC().getString("messages.items_sold").contains("{list}")) {
 
-                                for(Map.Entry<Material, Map<Short, Integer>> entry : soldMap[0].entrySet()) {
+                                for(Map.Entry<ItemStack, Map<Short, Integer>> entry : soldMap2.entrySet()) {
                                     for(Map.Entry<Short, Integer> damageEntry : entry.getValue().entrySet()) {
                                         @Deprecated
-                                        ItemStack materialItemStack = new ItemStack(entry.getKey(), 1,
-                                                damageEntry.getKey());
+                                        ItemStack materialItemStack = entry.getKey();
 
                                         double profits = ShopGuiPlusApi.getItemStackPriceSell(player,
                                                 materialItemStack) * damageEntry.getValue();
                                         String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencyPrefix() + profits + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencySuffix();
 
-
                                         String itemNameFormatted = WordUtils.capitalize(materialItemStack.getType().name().replace("_", " ").toLowerCase());
+
+                                        if(!materialItemStack.getItemMeta().getDisplayName().equals(null) && !materialItemStack.getItemMeta().getDisplayName().equals("")) itemNameFormatted = materialItemStack.getItemMeta().getDisplayName();
 
                                         if(serverVersion <= 12) itemNameFormatted += ":" + damageEntry.getKey();
 
