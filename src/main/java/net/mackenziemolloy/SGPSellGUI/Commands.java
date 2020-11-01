@@ -197,7 +197,6 @@ public class Commands implements CommandExecutor {
 
                                         itemList.append(itemNameFormatted).append(", ");
 
-
                                     }
                                 }
 
@@ -205,6 +204,8 @@ public class Commands implements CommandExecutor {
 
                             if(sellGUI.configHandler.getConfigC().getInt("options.receipt_type") == 1) {
 
+
+                                
                                 String msg = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.items_sold").replace("{earning}", pricing.toString()).replace("{receipt}", "").replace("{list}", itemList.substring(0, itemList.length()-2)));
                                 String receiptName = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.receipt_text"));
 
