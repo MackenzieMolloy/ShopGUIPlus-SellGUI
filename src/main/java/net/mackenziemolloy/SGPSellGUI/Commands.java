@@ -16,6 +16,7 @@ import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.lang.WordUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Supplier;
 
 public class Commands implements CommandExecutor {
 
@@ -180,13 +182,18 @@ public class Commands implements CommandExecutor {
                                         @Deprecated
                                         ItemStack materialItemStack = entry.getKey();
 
+
                                         double profits = ShopGuiPlusApi.getItemStackPriceSell(player,
                                                 materialItemStack) * damageEntry.getValue();
                                         String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencyPrefix() + profits + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencySuffix();
 
                                         String itemNameFormatted = WordUtils.capitalize(materialItemStack.getType().name().replace("_", " ").toLowerCase());
 
-                                        if(!materialItemStack.getItemMeta().getDisplayName().equals(null) && !materialItemStack.getItemMeta().getDisplayName().equals("")) itemNameFormatted = materialItemStack.getItemMeta().getDisplayName();
+                                        if(!(materialItemStack.getItemMeta().getDisplayName() == null)) {
+                                            if (!materialItemStack.getItemMeta().getDisplayName().equals("")) {
+                                                itemNameFormatted = materialItemStack.getItemMeta().getDisplayName();
+                                            }
+                                        }
 
                                         if(serverVersion <= 12) itemNameFormatted += ":" + damageEntry.getKey();
 
