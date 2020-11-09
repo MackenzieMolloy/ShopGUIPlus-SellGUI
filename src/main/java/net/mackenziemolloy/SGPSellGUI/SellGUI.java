@@ -1,5 +1,6 @@
 package net.mackenziemolloy.SGPSellGUI;
 
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -25,6 +26,10 @@ public class SellGUI extends JavaPlugin implements Listener {
         getLogger().info("Your server is running version " + version);
 
         configHandler.generateFiles();
+
+        Metrics metrics = new Metrics(this, 9356);
+        //metrics.addCustomChart();
+
 
     }
 
