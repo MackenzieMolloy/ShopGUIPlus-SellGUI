@@ -5,9 +5,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
+import java.io.IOException;
+
 public class SellGUI extends JavaPlugin implements Listener {
 
-    public Config configHandler = new Config(this);
+    public CommentedConfiguration configFile;
 
     @Override
     public void onEnable() {
@@ -25,12 +28,25 @@ public class SellGUI extends JavaPlugin implements Listener {
         }
         getLogger().info("Your server is running version " + version);
 
-        configHandler.generateFiles();
+        this.generateFiles();
 
         Metrics metrics = new Metrics(this, 9356);
-        //metrics.addCustomChart();
 
 
+    }
+
+    public void generateFiles() {
+        File file = new File(getDataFolder(), "config.yml");
+
+        if(!file.exists()) saveResource("config.yml", false);
+
+        configFile = CommentedConfiguration.loadConfiguration(file);
+        try {
+            configFile.syncWithConfig(file, getResource("config.yml"), "updates");
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
 }

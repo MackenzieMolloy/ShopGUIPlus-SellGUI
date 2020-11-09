@@ -8,17 +8,17 @@
 */
 package net.mackenziemolloy.SGPSellGUI;
 
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
+
 import me.mattstudios.mfgui.gui.guis.Gui;
 import net.brcdev.shopgui.ShopGuiPlusApi;
 import net.brcdev.shopgui.economy.EconomyType;
 import net.brcdev.shopgui.provider.economy.EconomyProvider;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.lang.WordUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Supplier;
+import java.util.concurrent.CompletableFuture;
 
 public class Commands implements CommandExecutor {
 
@@ -78,14 +78,14 @@ public class Commands implements CommandExecutor {
                     if(gamemodesList.contains(player.getGameMode().name()) && !player.hasPermission("shopguiplus.bypassgamemode")) {
 
                         String gamemodeFormatted = WordUtils.capitalize(player.getGameMode().toString().toLowerCase());
-                        String gamemodeNotAllowed = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.gamemode_not_allowed").replace("{gamemode}", gamemodeFormatted));
+                        String gamemodeNotAllowed = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.gamemode_not_allowed").replace("{gamemode}", gamemodeFormatted));
 
                         player.sendMessage(gamemodeNotAllowed);
                         return true;
 
                     }
 
-                    String sellGUITitle = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.sellgui_title"));
+                    String sellGUITitle = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.sellgui_title"));
 
                     Gui gui = new Gui(4, sellGUITitle);
 
@@ -149,7 +149,7 @@ public class Commands implements CommandExecutor {
 
                         if(ExcessItems[0]) {
 
-                            String ExcessItemsMsg = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.inventory_full"));
+                            String ExcessItemsMsg = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.inventory_full"));
                             player.sendMessage(ExcessItemsMsg);
 
                         }
@@ -175,7 +175,7 @@ public class Commands implements CommandExecutor {
                             StringBuilder itemList = new StringBuilder();
 
 
-                            if(sellGUI.configHandler.getConfigC().getInt("options.receipt_type") == 1 || sellGUI.configHandler.getConfigC().getString("messages.items_sold").contains("{list}")) {
+                            if(sellGUI.configFile.getInt("options.receipt_type") == 1 || sellGUI.configFile.getString("messages.items_sold").contains("{list}")) {
 
                                 for(Map.Entry<ItemStack, Map<Short, Integer>> entry : soldMap2.entrySet()) {
                                     for(Map.Entry<Short, Integer> damageEntry : entry.getValue().entrySet()) {
@@ -197,7 +197,7 @@ public class Commands implements CommandExecutor {
 
                                         if(serverVersion <= 12) itemNameFormatted += ":" + damageEntry.getKey();
 
-                                        receiptList.append("\n").append(sellGUI.configHandler.getConfigC().getString(
+                                        receiptList.append("\n").append(sellGUI.configFile.getString(
                                                 "messages.receipt_item_layout").replace("{amount}",
                                                 String.valueOf(damageEntry.getValue())).replace(
                                                 "{item}", itemNameFormatted).replace("{price}", profitsFormatted));
@@ -209,14 +209,14 @@ public class Commands implements CommandExecutor {
 
                             }
 
-                            if(sellGUI.configHandler.getConfigC().getInt("options.receipt_type") == 1) {
+                            if(sellGUI.configFile.getInt("options.receipt_type") == 1) {
 
 
                                 
-                                String msg = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.items_sold").replace("{earning}", pricing.toString()).replace("{receipt}", "").replace("{list}", itemList.substring(0, itemList.length()-2)));
-                                String receiptName = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.receipt_text"));
+                                String msg = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.items_sold").replace("{earning}", pricing.toString()).replace("{receipt}", "").replace("{list}", itemList.substring(0, itemList.length()-2)));
+                                String receiptName = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.receipt_text"));
 
-                                String receipt = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.receipt_title") + receiptList);
+                                String receipt = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.receipt_title") + receiptList);
                                 TextComponent test = new TextComponent(" " + receiptName);
                                 test.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                                         new ComponentBuilder(receipt).create()));
@@ -229,23 +229,34 @@ public class Commands implements CommandExecutor {
 
                             else {
 
-                                String msg = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.items_sold").replace("{earning}", pricing.toString()).replace("{receipt}", "").replace("{list}", itemList.substring(0, itemList.length()-2)));
+                                String msg = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.items_sold").replace("{earning}", pricing.toString()).replace("{receipt}", "").replace("{list}", itemList.substring(0, itemList.length()-2)));
                                 player.sendMessage(msg);
 
                             }
 
-                            if(sellGUI.configHandler.getConfigC().getBoolean("options.sell_titles")) {
+                            if(sellGUI.configFile.getBoolean("options.sell_titles")) {
 
-                                @Nullable String sellTitle = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.sell_title").replace("{earning}", pricing.toString()).replace("{amount}", String.valueOf(itemAmount)));
-                                @Nullable String sellSubtitle = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.sell_subtitle").replace("{earning}", pricing.toString()).replace("{amount}", String.valueOf(itemAmount)));
+                                @Nullable String sellTitle = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.sell_title").replace("{earning}", pricing.toString()).replace("{amount}", String.valueOf(itemAmount)));
+                                @Nullable String sellSubtitle = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.sell_subtitle").replace("{earning}", pricing.toString()).replace("{amount}", String.valueOf(itemAmount)));
 
                                 player.sendTitle(sellTitle, sellSubtitle);
 
                             }
 
+                            if(sellGUI.configFile.getBoolean("options.action_bar_msgs")) {
+
+                                if(serverVersion >= 9) {
+
+                                    @Nullable String actionBarMessage = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.action_bar_items_sold").replace("{earning}", pricing.toString()).replace("{amount}", String.valueOf(itemAmount)));
+
+                                    player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(actionBarMessage));
+                                }
+
+                            }
+
                         } else {
 
-                            String msg = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.no_items_sold"));
+                            String msg = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.no_items_sold"));
                             player.sendMessage(msg);
 
                         }
@@ -255,7 +266,7 @@ public class Commands implements CommandExecutor {
                     gui.open(player);
                 } else {
 
-                    String NoPermission = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.no_permission"));
+                    String NoPermission = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.no_permission"));
                     sender.sendMessage(NoPermission);
 
                 }
@@ -268,21 +279,27 @@ public class Commands implements CommandExecutor {
 
         else if(args[0].toLowerCase().equals("reload") || args[0].toLowerCase().equals("rl")) {
 
-            String configReloadedMsg = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.reloaded_config"));
-
             if(sender instanceof Player) {
 
                 if (sender.hasPermission("sellgui.reload")) {
 
-                    sellGUI.configHandler.reloadConfigC();
-                    sender.sendMessage(configReloadedMsg);
+                    CompletableFuture<Void> future = CompletableFuture.runAsync(() -> sellGUI.generateFiles());
+                    future.whenComplete((success, error) -> {
+                        if(error != null) {
+                            sender.sendMessage("An error occurred, check the console!");
+                            error.printStackTrace();
+                        } else {
+                            String configReloadedMsg = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.reloaded_config"));
+                            sender.sendMessage(configReloadedMsg);
+                        }
+                    });
 
                 }
 
                 else {
 
                     @SuppressWarnings("null")
-                    String noPermission = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.no_permission"));
+                    String noPermission = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.no_permission"));
                     sender.sendMessage(noPermission);
 
                 }
@@ -291,8 +308,16 @@ public class Commands implements CommandExecutor {
 
             else {
 
-                sellGUI.configHandler.reloadConfigC();
-                sellGUI.getServer().getConsoleSender().sendMessage(configReloadedMsg);
+                CompletableFuture<Void> future = CompletableFuture.runAsync(() -> sellGUI.generateFiles());
+                future.whenComplete((success, error) -> {
+                    if(error != null) {
+                        sender.sendMessage("An error occurred, check the console!");
+                        error.printStackTrace();
+                    } else {
+                        String configReloadedMsg = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.reloaded_config"));
+                        sellGUI.getServer().getConsoleSender().sendMessage(configReloadedMsg);
+                    }
+                });
 
             }
         }
@@ -327,7 +352,7 @@ public class Commands implements CommandExecutor {
                             System.getProperty("os.version") + " (" + System.getProperty("os.arch") + ")\n- Processor: " + System.getenv("PROCESSOR_IDENTIFIER")
                             + "\n\n| Server Information\n\n- Version: " + sellGUI.getServer().getBukkitVersion() + "\n- Online Mode: "
                             + sellGUI.getServer().getOnlineMode() + "\n- Memory Usage: " + (Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/(1048576) + "/"
-                            + Runtime.getRuntime().maxMemory()/(1048576) + "MB\n\n| Plugins\n" + pluginList + "\n\n| Plugin Configuration\n\n" + sellGUI.configHandler.getConfigC().saveToString();
+                            + Runtime.getRuntime().maxMemory()/(1048576) + "MB\n\n| Plugins\n" + pluginList + "\n\n| Plugin Configuration\n\n" + sellGUI.configFile.saveToString();
 
                     boolean raw = true;
 
@@ -344,7 +369,7 @@ public class Commands implements CommandExecutor {
                 else {
 
                     @SuppressWarnings("null")
-                    String noPermission = ChatColor.translateAlternateColorCodes('&', sellGUI.configHandler.getConfigC().getString("messages.no_permission"));
+                    String noPermission = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.no_permission"));
                     sender.sendMessage(noPermission);
 
                 }
@@ -373,7 +398,7 @@ public class Commands implements CommandExecutor {
                         System.getProperty("os.version") + " (" + System.getProperty("os.arch") + ")\n- Processor: " + System.getenv("PROCESSOR_IDENTIFIER")
                         + "\n\n| Server Information\n\n- Version: " + sellGUI.getServer().getBukkitVersion() + "\n- Online Mode: "
                         + sellGUI.getServer().getOnlineMode() + "\n- Memory Usage: " + (Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/(1048576) + "/"
-                        + Runtime.getRuntime().maxMemory()/(1048576) + "\n\n| Plugins\n" + pluginList + "\n\n| Plugin Configuration\n\n" + sellGUI.configHandler.getConfigC().saveToString();
+                        + Runtime.getRuntime().maxMemory()/(1048576) + "\n\n| Plugins\n" + pluginList + "\n\n| Plugin Configuration\n\n" + sellGUI.configFile.saveToString();
 
                 boolean raw = true;
 

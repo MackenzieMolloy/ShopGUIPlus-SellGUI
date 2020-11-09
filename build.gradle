@@ -12,12 +12,14 @@ repositories {
 
     maven({ url = "https://papermc.io/repo/repository/maven-public/" })
     maven { url = 'https://repo.mattstudios.me/artifactory/public' }
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
     maven { url 'https://repo.codemc.org/repository/maven-public' }
     maven { url 'https://jitpack.io' }
 
 }
 
 dependencies {
+    compileOnly "net.md-5:bungeecord-api:1.16-R0.3"
     compileOnly "org.spigotmc:spigot-api:1.15.2-R0.1-SNAPSHOT"
     implementation "me.mattstudios.utils:matt-framework-gui:2.0.2"
     implementation 'org.bstats:bstats-bukkit:1.7'

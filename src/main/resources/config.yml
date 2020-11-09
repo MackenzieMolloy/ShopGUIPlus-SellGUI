@@ -20,6 +20,10 @@ options:
   #
   receipt_type: 1
   sell_titles: true
+  #
+  # Action Bar Messages only work on versions 1.9+
+  #
+  action_bar_msgs: true
 messages:
   no_permission: "&cYou do not have permission"
   sellgui_title: "&0Sell GUI"
@@ -39,10 +43,15 @@ messages:
   #
   receipt_item_layout: "&a{amount} x {item} &ffor &a{price}"
   #
-  # {amount} - returns out of items sold
+  # {amount} - returns amount of items sold
   # {earning} - returns the total amount made
   #
   sell_title: "&a&l+{earning}"
   sell_subtitle: "&7You sold &a&n{amount}&7 items in this batch"
   gamemode_not_allowed: "&aShop > &fYou are not allowed to use the Sell GUI in &a{gamemode} mode&f."
   inventory_full: "&aShop > &fYour inventory is currently full, so excess items have been dropped on the ground."
+  #
+  # {amount} - returns amount of items sold
+  # {earning} - returns the total amount made
+  #
+  action_bar_items_sold: "&aShop > &fYou sold &a{amount} &fitems in this batch."
