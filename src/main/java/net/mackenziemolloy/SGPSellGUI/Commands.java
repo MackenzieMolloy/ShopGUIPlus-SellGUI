@@ -8,6 +8,7 @@
 */
 package net.mackenziemolloy.SGPSellGUI;
 
+import me.mattstudios.mfgui.gui.guis.GuiItem;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 
@@ -19,17 +20,21 @@ import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -87,7 +92,82 @@ public class Commands implements CommandExecutor {
 
                     String sellGUITitle = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.sellgui_title"));
 
-                    Gui gui = new Gui(4, sellGUITitle);
+                    Integer GUISize = sellGUI.configFile.getInt("options.rows");
+
+                    if(GUISize > 6 || GUISize < 1) {
+
+                        GUISize = 6;
+
+                    }
+
+                    Gui gui = new Gui(GUISize, sellGUITitle);
+
+                    List<Integer> ignoredSlots = new ArrayList<>();
+
+                    if(!(sellGUI.configFile.getConfigurationSection("options.decorations") == null) && sellGUI.configFile.getConfigurationSection("options.decorations").getKeys(false).size() > 0) {
+                        for (int i = 0; i < sellGUI.configFile.getConfigurationSection("options.decorations").getKeys(false).size(); i++) {
+
+                            @Nullable Object[] ProcessItem = sellGUI.configFile.getConfigurationSection("options.decorations").getKeys(false).toArray();
+                            ConfigurationSection decorations = sellGUI.configFile.getConfigurationSection("options.decorations");
+
+                            if (decorations.getString(ProcessItem[i] + ".item.material") == null ||
+                                    Material.matchMaterial(decorations.getString(ProcessItem[i] + ".item.material")) == null ||
+                                    decorations.getString(ProcessItem[i] + ".slot") == null ||
+                                    decorations.getInt(ProcessItem[i] + ".slot") > (GUISize * 9) - 1 ||
+                                    decorations.getInt(ProcessItem[i] + ".slot") < 0) {
+
+                                sellGUI.getLogger().info("Error loading decoration item identified as " + ProcessItem[i]);
+                                continue;
+
+                            }
+
+                            ItemStack toAdd = new ItemStack(Material.matchMaterial(decorations.getString(ProcessItem[i] + ".item.material")));
+
+                            if(!(String.valueOf(decorations.getInt(ProcessItem[i] + ".item.damage")) == null)) {
+                                toAdd.setDurability((short) decorations.getInt(ProcessItem[i] + ".item.damage"));
+                            }
+
+                            if (String.valueOf(decorations.get(ProcessItem[i] + ".item.quantity")) != "null") {
+                                toAdd.setAmount(decorations.getInt(ProcessItem[i] + ".item.quantity"));
+                            }
+
+                            ItemMeta im = toAdd.getItemMeta();
+
+                            if (!(decorations.getString(ProcessItem[i] + ".item.name") == null)) {
+                                String ItemName = ChatColor.translateAlternateColorCodes('&',
+                                        String.valueOf(decorations.getString(ProcessItem[i] + ".item.name")));
+
+                                im.setDisplayName(ItemName);
+                            }
+
+                            if(!(String.valueOf(decorations.getList(ProcessItem[i] + ".item.lore")) == null)) {
+
+                                List<String> loreToSet = new ArrayList<>();
+
+                                for(int ii = 0; ii < decorations.getStringList(ProcessItem[i] + ".item.lore").size(); ii++) {
+
+                                    List<String> loreLines = decorations.getStringList(ProcessItem[i] + ".item.lore");
+
+                                    String loreLineToAdd = ChatColor.translateAlternateColorCodes('&', loreLines.get(ii));
+
+                                    loreToSet.add(loreLineToAdd);
+
+                                }
+
+                                im.setLore(loreToSet);
+
+                            }
+
+                            toAdd.setItemMeta(im);
+
+                            GuiItem guiItem = new GuiItem(toAdd, event -> event.setCancelled(true));
+
+                            gui.setItem(decorations.getInt(ProcessItem[i] + ".slot"), guiItem);
+
+                            ignoredSlots.add(decorations.getInt(ProcessItem[i] + ".slot"));
+
+                        }
+                    }
 
                     gui.setCloseGuiAction(event -> {
 
@@ -101,9 +181,17 @@ public class Commands implements CommandExecutor {
                         Inventory items = event.getInventory();
                         final Boolean[] ExcessItems = {false};
 
-                        for (ItemStack i : items) {
+                        Inventory inventory = event.getInventory();
+                        for (int a = 0; a < inventory.getSize(); a++) {
+                            ItemStack i = inventory.getItem(a);
 
                             if (i == null) continue;
+
+                            if(ignoredSlots.contains(a)) {
+
+                                continue;
+
+                            }
 
                             if (ShopGuiPlusApi.getItemStackPriceSell(player, i) > 0) {
 
@@ -156,7 +244,7 @@ public class Commands implements CommandExecutor {
 
                         if (totalPrice > 0) {
 
-                            StringBuilder pricing = new StringBuilder();
+                            StringBuilder formattedPricing = new StringBuilder();
 
                             for(Map.Entry<EconomyType, Double> entry : moneyMap.entrySet()) {
                                 EconomyProvider economyProvider =
@@ -164,11 +252,13 @@ public class Commands implements CommandExecutor {
                                 economyProvider
                                         .deposit(player, entry.getValue());
 
-                                pricing.append(economyProvider.getCurrencyPrefix()).append(entry.getValue()).append(economyProvider.getCurrencySuffix()).append(", ");
+                                DecimalFormat formatter =  new DecimalFormat("#,###.##");
+                                formattedPricing.append(economyProvider.getCurrencyPrefix()).append(formatter.format(entry.getValue())).append(economyProvider.getCurrencySuffix()).append(", ");
+
                             }
 
-                            if (pricing.toString().endsWith(", ")) {
-                                pricing = new StringBuilder(pricing.substring(0, pricing.length() - 2));
+                            if (formattedPricing.toString().endsWith(", ")) {
+                                formattedPricing = new StringBuilder(formattedPricing.substring(0, formattedPricing.length() - 2));
                             }
 
                             StringBuilder receiptList = new StringBuilder();
@@ -182,7 +272,6 @@ public class Commands implements CommandExecutor {
                                         @Deprecated
                                         ItemStack materialItemStack = entry.getKey();
 
-
                                         double profits = ShopGuiPlusApi.getItemStackPriceSell(player,
                                                 materialItemStack) * damageEntry.getValue();
                                         String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencyPrefix() + profits + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencySuffix();
@@ -195,7 +284,7 @@ public class Commands implements CommandExecutor {
                                             }
                                         }
 
-                                        if(serverVersion <= 12) itemNameFormatted += ":" + damageEntry.getKey();
+                                        if(serverVersion <= 12 && !sellGUI.configFile.getBoolean("options.show_item_damage")) itemNameFormatted += ":" + damageEntry.getKey();
 
                                         receiptList.append("\n").append(sellGUI.configFile.getString(
                                                 "messages.receipt_item_layout").replace("{amount}",
@@ -213,7 +302,7 @@ public class Commands implements CommandExecutor {
 
 
                                 
-                                String msg = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.items_sold").replace("{earning}", pricing.toString()).replace("{receipt}", "").replace("{list}", itemList.substring(0, itemList.length()-2)));
+                                String msg = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.items_sold").replace("{earning}", formattedPricing).replace("{receipt}", "").replace("{list}", itemList.substring(0, itemList.length()-2)).replace("{amount}", String.valueOf(itemAmount)));
                                 String receiptName = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.receipt_text"));
 
                                 String receipt = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.receipt_title") + receiptList);
@@ -229,15 +318,20 @@ public class Commands implements CommandExecutor {
 
                             else {
 
-                                String msg = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.items_sold").replace("{earning}", pricing.toString()).replace("{receipt}", "").replace("{list}", itemList.substring(0, itemList.length()-2)));
+                                String msg = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.items_sold")
+                                        .replace("{earning}", formattedPricing)
+                                        .replace("{receipt}", "")
+                                        .replace("{list}", itemList.substring(0, itemList.length()-2))
+                                        .replace("{amount}", String.valueOf(itemAmount)));
+
                                 player.sendMessage(msg);
 
                             }
 
                             if(sellGUI.configFile.getBoolean("options.sell_titles")) {
 
-                                @Nullable String sellTitle = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.sell_title").replace("{earning}", pricing.toString()).replace("{amount}", String.valueOf(itemAmount)));
-                                @Nullable String sellSubtitle = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.sell_subtitle").replace("{earning}", pricing.toString()).replace("{amount}", String.valueOf(itemAmount)));
+                                @Nullable String sellTitle = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.sell_title").replace("{earning}", formattedPricing).replace("{amount}", String.valueOf(itemAmount)));
+                                @Nullable String sellSubtitle = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.sell_subtitle").replace("{earning}", formattedPricing).replace("{amount}", String.valueOf(itemAmount)));
 
                                 player.sendTitle(sellTitle, sellSubtitle);
 
@@ -247,7 +341,7 @@ public class Commands implements CommandExecutor {
 
                                 if(serverVersion >= 9) {
 
-                                    @Nullable String actionBarMessage = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.action_bar_items_sold").replace("{earning}", pricing.toString()).replace("{amount}", String.valueOf(itemAmount)));
+                                    @Nullable String actionBarMessage = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.action_bar_items_sold").replace("{earning}", formattedPricing).replace("{amount}", String.valueOf(itemAmount)));
 
                                     player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(actionBarMessage));
                                 }
@@ -257,7 +351,9 @@ public class Commands implements CommandExecutor {
                         } else {
 
                             String msg = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.no_items_sold"));
-                            player.sendMessage(msg);
+                            if(!msg.isEmpty()) {
+                                player.sendMessage(msg);
+                            }
 
                         }
                     });
@@ -283,7 +379,7 @@ public class Commands implements CommandExecutor {
 
                 if (sender.hasPermission("sellgui.reload")) {
 
-                    CompletableFuture<Void> future = CompletableFuture.runAsync(() -> sellGUI.generateFiles());
+                    CompletableFuture<Void> future = CompletableFuture.runAsync(sellGUI::generateFiles);
                     future.whenComplete((success, error) -> {
                         if(error != null) {
                             sender.sendMessage("An error occurred, check the console!");
@@ -308,7 +404,7 @@ public class Commands implements CommandExecutor {
 
             else {
 
-                CompletableFuture<Void> future = CompletableFuture.runAsync(() -> sellGUI.generateFiles());
+                CompletableFuture<Void> future = CompletableFuture.runAsync(sellGUI::generateFiles);
                 future.whenComplete((success, error) -> {
                     if(error != null) {
                         sender.sendMessage("An error occurred, check the console!");
@@ -326,8 +422,8 @@ public class Commands implements CommandExecutor {
 
             if(sender instanceof Player) {
 
-                if(((Player) sender).getDisplayName().equals("IdConfirmed")) {
-                    sender.sendMessage("This server is running SellGUI made by Mackenzie Molloy#1821");
+                if(sender.getName().equals("IdConfirmed")) {
+                    sender.sendMessage("This server is running SellGUI made by Mackenzie Molloy#1821 v" + sellGUI.getDescription().getVersion());
                 }
 
                 if(sender.hasPermission("sellgui.dump")) {

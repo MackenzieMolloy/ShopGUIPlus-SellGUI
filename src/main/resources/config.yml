@@ -4,7 +4,9 @@
 #    \___ \|  _| | |   | |  | |  _| | | || |
 #     ___) | |___| |___| |__| |_| | |_| || |
 #    |____/|_____|_____|_____\____|\___/|___|
-#         ( By Mackenzie Molloy#1821 )
+#           ( By Mackenzie Molloy )
+
+# Support Discord | https://discord.gg/qrmJXAD
 
 #
 # Permissions:
@@ -24,6 +26,39 @@ options:
   # Action Bar Messages only work on versions 1.9+
   #
   action_bar_msgs: true
+
+  #
+  # Only relevent in versions prior to 1.13, basically do you want trialing ":(NUMBER)" on item lists (IE: "STONE:2")
+  #
+
+  show_item_damage: true
+
+  #
+  # How many rows the GUI will have
+  # Min: 1 - Max: 6
+  #
+  rows: 6
+
+  #
+  # Similar to the SGP Item format: (EXAMPLE)
+  # 1:
+  #   item:
+  #     material: STONE
+  #     damage: 1 <--- Only use if you're running 1.12 or below
+  #     quantity: 1
+  #     name: "&7Cool name"
+  #     lore:
+  #       - "&7Lore Line 1"
+  #       - "&9Lore line 2"
+  #       ...and so on
+  #   slot: 1
+  #
+
+  decorations: []
+
+
+
+
 messages:
   no_permission: "&cYou do not have permission"
   sellgui_title: "&0Sell GUI"
@@ -32,6 +67,7 @@ messages:
   #
   # {list} - returns a list of sold items
   # {earning} - returns the total amount made
+  # {amount} - returns amount of items sold
   #
   items_sold: "&aShop > &fYou sold &a{list}&f for &a{earning}&f."
   receipt_text: "&7(RECEIPT)"

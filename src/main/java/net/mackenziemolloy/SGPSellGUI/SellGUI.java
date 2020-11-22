@@ -2,13 +2,12 @@ package net.mackenziemolloy.SGPSellGUI;
 
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
-import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
 
-public class SellGUI extends JavaPlugin implements Listener {
+public class SellGUI extends JavaPlugin {
 
     public CommentedConfiguration configFile;
 
@@ -29,6 +28,7 @@ public class SellGUI extends JavaPlugin implements Listener {
         getLogger().info("Your server is running version " + version);
 
         this.generateFiles();
+        //configFile.set("options.decoration", []);
 
         Metrics metrics = new Metrics(this, 9356);
 
@@ -42,7 +42,7 @@ public class SellGUI extends JavaPlugin implements Listener {
 
         configFile = CommentedConfiguration.loadConfiguration(file);
         try {
-            configFile.syncWithConfig(file, getResource("config.yml"), "updates");
+            configFile.syncWithConfig(file, getResource("config.yml"), "stupid_option"); //decorations
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
