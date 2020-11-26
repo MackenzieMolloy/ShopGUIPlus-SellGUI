@@ -34,9 +34,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+
+import static java.lang.Math.round;
 
 public class Commands implements CommandExecutor {
 
@@ -66,6 +69,37 @@ public class Commands implements CommandExecutor {
        return itemEconomyType;
     }
 
+    // 278
+
+    public String pricingFormat(double price, boolean raw) {
+
+        if(sellGUI.configFile.getBoolean("options.rounded_pricing")) {
+
+            DecimalFormat formatToApply = new DecimalFormat("#,###.##");
+
+            if(raw) {
+                DecimalFormat formatToApplyRaw = new DecimalFormat("#.##");
+                return formatToApplyRaw.format(price);
+            }
+            else {
+                return formatToApply.format(price);
+            }
+
+        }
+
+        else {
+
+            if(raw) {
+                return String.valueOf(price);
+            }
+            else {
+                return String.format("%,f", new BigDecimal(price)).replaceAll("0*$", "").replaceAll("\\.$", "");
+            }
+
+        }
+
+    }
+
     @Override @SuppressWarnings("ConstantConditions") @Deprecated
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
 
@@ -92,7 +126,7 @@ public class Commands implements CommandExecutor {
 
                     String sellGUITitle = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.sellgui_title"));
 
-                    Integer GUISize = sellGUI.configFile.getInt("options.rows");
+                    int GUISize = sellGUI.configFile.getInt("options.rows");
 
                     if(GUISize > 6 || GUISize < 1) {
 
@@ -181,6 +215,8 @@ public class Commands implements CommandExecutor {
                         Inventory items = event.getInventory();
                         final Boolean[] ExcessItems = {false};
 
+                        boolean itemsPlacedInGui = false;
+
                         Inventory inventory = event.getInventory();
                         for (int a = 0; a < inventory.getSize(); a++) {
                             ItemStack i = inventory.getItem(a);
@@ -192,6 +228,8 @@ public class Commands implements CommandExecutor {
                                 continue;
 
                             }
+
+                            itemsPlacedInGui = true;
 
                             if (ShopGuiPlusApi.getItemStackPriceSell(player, i) > 0) {
 
@@ -250,10 +288,9 @@ public class Commands implements CommandExecutor {
                                 EconomyProvider economyProvider =
                                         ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(entry.getKey());
                                 economyProvider
-                                        .deposit(player, entry.getValue());
+                                        .deposit(player, Double.valueOf(pricingFormat(entry.getValue(),true)));
 
-                                DecimalFormat formatter =  new DecimalFormat("#,###.##");
-                                formattedPricing.append(economyProvider.getCurrencyPrefix()).append(formatter.format(entry.getValue())).append(economyProvider.getCurrencySuffix()).append(", ");
+                                formattedPricing.append(economyProvider.getCurrencyPrefix()).append(pricingFormat(entry.getValue(), false)).append(economyProvider.getCurrencySuffix()).append(", ");
 
                             }
 
@@ -274,7 +311,7 @@ public class Commands implements CommandExecutor {
 
                                         double profits = ShopGuiPlusApi.getItemStackPriceSell(player,
                                                 materialItemStack) * damageEntry.getValue();
-                                        String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencyPrefix() + profits + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencySuffix();
+                                        String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencyPrefix() + pricingFormat(profits, false) + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencySuffix();
 
                                         String itemNameFormatted = WordUtils.capitalize(materialItemStack.getType().name().replace("_", " ").toLowerCase());
 
@@ -350,9 +387,21 @@ public class Commands implements CommandExecutor {
 
                         } else {
 
-                            String msg = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.no_items_sold"));
-                            if(!msg.isEmpty()) {
-                                player.sendMessage(msg);
+                            if(itemsPlacedInGui) {
+
+                                String msg = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.no_items_sold"));
+                                if(!msg.isEmpty()) {
+                                    player.sendMessage(msg);
+                                }
+
+                            }
+                            else {
+
+                                String NoItemsInGUI = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.no_items_in_gui"));
+                                if(!NoItemsInGUI.isEmpty()) {
+                                    player.sendMessage(NoItemsInGUI);
+                                }
+
                             }
 
                         }
