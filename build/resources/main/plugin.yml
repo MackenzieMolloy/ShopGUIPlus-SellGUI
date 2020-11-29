@@ -1,7 +1,7 @@
 name: "ShopGUIPlus-SellGUI"
 main: "net.mackenziemolloy.SGPSellGUI.SellGUI"
 authors: ["Mackenzie Molloy"]
-version: "1.0.7"
+version: "1.0.8"
 api-version: "1.15"
 softdepend: [ShopGUIPlus]
 

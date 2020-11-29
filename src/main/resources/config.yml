@@ -58,6 +58,8 @@ options:
   #       - "&7Lore Line 1"
   #       - "&9Lore line 2"
   #       ...and so on
+  #   commandsOnClick: (or commandsOnClickConsole)
+  #     - "say %PLAYER%"
   #   slot: 1
   #
 

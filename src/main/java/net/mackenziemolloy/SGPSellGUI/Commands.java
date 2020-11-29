@@ -3,12 +3,13 @@
     IDEAS
     - Inventory Receipt Option
     - Sell price fetch command (like hold item, it says sell price)
+    - PAPI Support
+    - esimated price placeholder
     - Any other ideas?
 
 */
 package net.mackenziemolloy.SGPSellGUI;
 
-import me.mattstudios.mfgui.gui.components.GuiAction;
 import me.mattstudios.mfgui.gui.guis.GuiItem;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -39,8 +40,6 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-
-import static java.lang.Math.round;
 
 public class Commands implements CommandExecutor {
 
