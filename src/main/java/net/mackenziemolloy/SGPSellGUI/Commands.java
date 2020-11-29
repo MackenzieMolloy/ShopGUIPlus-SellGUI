@@ -8,6 +8,7 @@
 */
 package net.mackenziemolloy.SGPSellGUI;
 
+import me.mattstudios.mfgui.gui.components.GuiAction;
 import me.mattstudios.mfgui.gui.guis.GuiItem;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -75,7 +76,7 @@ public class Commands implements CommandExecutor {
 
         if(sellGUI.configFile.getBoolean("options.rounded_pricing")) {
 
-            DecimalFormat formatToApply = new DecimalFormat("#,###.##");
+            DecimalFormat formatToApply = new DecimalFormat("#,##0.00");
 
             if(raw) {
                 DecimalFormat formatToApplyRaw = new DecimalFormat("#.##");
@@ -192,9 +193,48 @@ public class Commands implements CommandExecutor {
 
                             }
 
+                            List<String> consoleCommands = new ArrayList<>();
+
+                            if (!(String.valueOf(decorations.getList(ProcessItem[i] + ".commandsOnClickConsole")) == null)) {
+
+                                for(int iii = 0; iii < decorations.getStringList(ProcessItem[i] + ".commandsOnClickConsole").size(); iii++) {
+
+                                    consoleCommands.add(decorations.getStringList(ProcessItem[i] + ".commandsOnClickConsole").get(iii));
+
+                                }
+
+                            }
+
+                            List<String> playerCommands = new ArrayList<>();
+
+                            if (!(String.valueOf(decorations.getList(ProcessItem[i] + ".commandsOnClick")) == null)) {
+
+                                for(int iii = 0; iii < decorations.getStringList(ProcessItem[i] + ".commandsOnClick").size(); iii++) {
+
+                                    playerCommands.add(decorations.getStringList(ProcessItem[i] + ".commandsOnClick").get(iii));
+
+                                }
+
+                            }
+
                             toAdd.setItemMeta(im);
 
-                            GuiItem guiItem = new GuiItem(toAdd, event -> event.setCancelled(true));
+                            GuiItem guiItem = new GuiItem(toAdd, event -> {
+                                event.setCancelled(true);
+
+                                for (String consoleCommand : consoleCommands) {
+
+                                    sellGUI.getServer().dispatchCommand(sellGUI.getServer().getConsoleSender(), consoleCommand.replace("%PLAYER%", event.getWhoClicked().getName()));
+
+                                }
+
+                                for (String playerCommand : playerCommands) {
+
+                                    sellGUI.getServer().dispatchCommand(event.getWhoClicked(), playerCommand.replace("%PLAYER%", event.getWhoClicked().getName()));
+
+                                }
+
+                            });
 
                             gui.setItem(decorations.getInt(ProcessItem[i] + ".slot"), guiItem);
 
@@ -313,7 +353,7 @@ public class Commands implements CommandExecutor {
                                                 materialItemStack) * damageEntry.getValue();
                                         String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencyPrefix() + pricingFormat(profits, false) + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencySuffix();
 
-                                        String itemNameFormatted = WordUtils.capitalize(materialItemStack.getType().name().replace("_", " ").toLowerCase());
+                                        String itemNameFormatted = WordUtils.capitalize(materialItemStack.getType().name().replace("AETHER_LEGACY_", "").replace("LOST_AETHER_", "").replace("_", " ").toLowerCase());
 
                                         if(!(materialItemStack.getItemMeta().getDisplayName() == null)) {
                                             if (!materialItemStack.getItemMeta().getDisplayName().equals("")) {
@@ -366,6 +406,7 @@ public class Commands implements CommandExecutor {
                             }
 
                             if(sellGUI.configFile.getBoolean("options.sell_titles")) {
+
 
                                 @Nullable String sellTitle = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.sell_title").replace("{earning}", formattedPricing).replace("{amount}", String.valueOf(itemAmount)));
                                 @Nullable String sellSubtitle = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.sell_subtitle").replace("{earning}", formattedPricing).replace("{amount}", String.valueOf(itemAmount)));

@@ -22,6 +22,13 @@ options:
   #
   receipt_type: 1
   sell_titles: true
+
+  #
+  # Whether prices should be rounded to 2 decimal places, or not.
+  #
+
+  rounded_pricing: false
+
   #
   # Action Bar Messages only work on versions 1.9+
   #
@@ -64,6 +71,7 @@ messages:
   sellgui_title: "&0Sell GUI"
   reloaded_config: "&c[SellGUI] Reloaded configuration files."
   no_items_sold: "&aShop > &fYou didn't have anything sellable."
+  no_items_in_gui: "&aShop > &fYou didn't place any items in the GUI."
   #
   # {list} - returns a list of sold items
   # {earning} - returns the total amount made
