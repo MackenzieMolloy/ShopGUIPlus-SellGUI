@@ -1,5 +1,6 @@
 package net.mackenziemolloy.SGPSellGUI;
 
+import net.mackenziemolloy.SGPSellGUI.Utils.CommentedConfiguration;
 import net.mackenziemolloy.SGPSellGUI.Utils.UpdateChecker;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;

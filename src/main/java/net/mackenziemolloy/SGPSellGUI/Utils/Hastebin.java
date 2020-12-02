@@ -1,4 +1,4 @@
-package net.mackenziemolloy.SGPSellGUI;
+package net.mackenziemolloy.SGPSellGUI.Utils;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;

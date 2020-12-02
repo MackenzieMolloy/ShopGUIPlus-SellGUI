@@ -11,6 +11,7 @@
 package net.mackenziemolloy.SGPSellGUI;
 
 import me.mattstudios.mfgui.gui.guis.GuiItem;
+import net.mackenziemolloy.SGPSellGUI.Utils.Hastebin;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 

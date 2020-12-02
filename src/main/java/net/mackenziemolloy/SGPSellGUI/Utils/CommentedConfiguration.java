@@ -1,4 +1,4 @@
-package net.mackenziemolloy.SGPSellGUI;
+package net.mackenziemolloy.SGPSellGUI.Utils;
 
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
