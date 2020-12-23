@@ -11,7 +11,13 @@
 package net.mackenziemolloy.SGPSellGUI;
 
 import me.mattstudios.mfgui.gui.guis.GuiItem;
+import net.brcdev.shopgui.exception.player.PlayerDataNotLoadedException;
+import net.brcdev.shopgui.modifier.PriceModifierActionType;
+import net.brcdev.shopgui.shop.ShopItem;
+import net.brcdev.shopgui.shop.ShopManager;
 import net.mackenziemolloy.SGPSellGUI.Utils.Hastebin;
+import net.mackenziemolloy.SGPSellGUI.Utils.PlayerHandler;
+import net.mackenziemolloy.SGPSellGUI.Utils.ShopHandler;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 
@@ -22,8 +28,10 @@ import net.brcdev.shopgui.provider.economy.EconomyProvider;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import org.apache.commons.lang.WordUtils;
+import org.apache.commons.lang.enums.EnumUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -53,24 +61,6 @@ public class Commands implements CommandExecutor {
         sellGUI.getCommand("sellgui").setExecutor(this);
     }
 
-    public EconomyType getEconomyType(ItemStack material, Player player) {
-
-        EconomyType itemEconomyType = ShopGuiPlusApi.getItemStackShop(material).getEconomyType();
-        String defaultEconomyType = ShopGuiPlusApi.getPlugin().getEconomyManager().getDefaultEconomyProvider().getName().toUpperCase();
-
-        if(itemEconomyType == null) {
-            try {
-                itemEconomyType = EconomyType.valueOf(defaultEconomyType);
-            } catch(IllegalArgumentException ex) {
-                player.sendMessage("§cOops... something went wrong when processing " +
-                        "the economy type. Please contact a server administrator.");
-            }
-        }
-
-       return itemEconomyType;
-    }
-
-    // 278
 
     public String pricingFormat(double price, boolean raw) {
 
@@ -136,6 +126,7 @@ public class Commands implements CommandExecutor {
                     }
 
                     Gui gui = new Gui(GUISize, sellGUITitle);
+                    PlayerHandler.playSound(player, "open");
 
                     List<Integer> ignoredSlots = new ArrayList<>();
 
@@ -271,7 +262,7 @@ public class Commands implements CommandExecutor {
 
                             itemsPlacedInGui = true;
 
-                            if (ShopGuiPlusApi.getItemStackPriceSell(player, i) > 0) {
+                            if (ShopHandler.getItemSellPrice(i, player) > 0) {
 
                                 itemAmount += i.getAmount();
 
@@ -279,11 +270,11 @@ public class Commands implements CommandExecutor {
                                 short materialDamage = i.getDurability();
                                 int amount = i.getAmount();
 
-                                double itemSellPrice = ShopGuiPlusApi.getItemStackPriceSell(player, i);
+                                double itemSellPrice = ShopHandler.getItemSellPrice(i, player);
 
                                 totalPrice = totalPrice + itemSellPrice;
 
-                                EconomyType itemEconomyType = getEconomyType(i, (Player) event.getPlayer());
+                                EconomyType itemEconomyType = ShopHandler.getEconomyType(i, (Player) event.getPlayer());
 
                                 ItemStack SingleItemStack = new ItemStack(i);
                                 SingleItemStack.setAmount(1);
@@ -322,15 +313,19 @@ public class Commands implements CommandExecutor {
 
                         if (totalPrice > 0) {
 
+                            PlayerHandler.playSound((Player) event.getPlayer(), "success");
+
                             StringBuilder formattedPricing = new StringBuilder();
 
                             for(Map.Entry<EconomyType, Double> entry : moneyMap.entrySet()) {
                                 EconomyProvider economyProvider =
                                         ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(entry.getKey());
                                 economyProvider
-                                        .deposit(player, Double.valueOf(pricingFormat(entry.getValue(),true)));
+                                        .deposit(player, entry.getValue());
 
-                                formattedPricing.append(economyProvider.getCurrencyPrefix()).append(pricingFormat(entry.getValue(), false)).append(economyProvider.getCurrencySuffix()).append(", ");
+
+
+                                formattedPricing.append(economyProvider.getCurrencyPrefix()).append(ShopHandler.getFormattedPrice(entry.getValue(), entry.getKey())).append(economyProvider.getCurrencySuffix()).append(", ");
 
                             }
 
@@ -349,9 +344,8 @@ public class Commands implements CommandExecutor {
                                         @Deprecated
                                         ItemStack materialItemStack = entry.getKey();
 
-                                        double profits = ShopGuiPlusApi.getItemStackPriceSell(player,
-                                                materialItemStack) * damageEntry.getValue();
-                                        String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencyPrefix() + pricingFormat(profits, false) + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(getEconomyType(materialItemStack, player)).getCurrencySuffix();
+                                        double profits = ShopHandler.getItemSellPrice(materialItemStack, player) * damageEntry.getValue();
+                                        String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(ShopHandler.getEconomyType(materialItemStack, player)).getCurrencyPrefix() + ShopHandler.getFormattedPrice(profits, ShopHandler.getEconomyType(materialItemStack, player)) + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(ShopHandler.getEconomyType(materialItemStack, player)).getCurrencySuffix();
 
                                         String itemNameFormatted = WordUtils.capitalize(materialItemStack.getType().name().replace("AETHER_LEGACY_", "").replace("LOST_AETHER_", "").replace("_", " ").toLowerCase());
 
@@ -430,6 +424,8 @@ public class Commands implements CommandExecutor {
 
                             if(itemsPlacedInGui) {
 
+                                PlayerHandler.playSound(player, "failed");
+
                                 String msg = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.no_items_sold"));
                                 if(!msg.isEmpty()) {
                                     player.sendMessage(msg);
@@ -438,6 +434,7 @@ public class Commands implements CommandExecutor {
                             }
                             else {
 
+                                PlayerHandler.playSound(player, "failed");
                                 String NoItemsInGUI = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.no_items_in_gui"));
                                 if(!NoItemsInGUI.isEmpty()) {
                                     player.sendMessage(NoItemsInGUI);
@@ -477,6 +474,7 @@ public class Commands implements CommandExecutor {
                         } else {
                             String configReloadedMsg = ChatColor.translateAlternateColorCodes('&', sellGUI.configFile.getString("messages.reloaded_config"));
                             sender.sendMessage(configReloadedMsg);
+                            PlayerHandler.playSound((Player) sender, "success");
                         }
                     });
 
@@ -546,6 +544,7 @@ public class Commands implements CommandExecutor {
                         String url = hastebin.post(text, raw);
                         sellGUI.getServer().getConsoleSender().sendMessage(pastedDumpMsg.replace("{url}", url));
                         sender.sendMessage(pastedDumpMsg.replace("{url}", url));
+                        PlayerHandler.playSound((Player) sender, "success");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

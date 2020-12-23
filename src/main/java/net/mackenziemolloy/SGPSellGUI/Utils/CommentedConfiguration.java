@@ -1,3 +1,20 @@
+/*******************************************************************************
+ *
+ *     CommentedConfiguration
+ *     Developed by Ome_R
+ *
+ *     You may use the resource and/or modify it - but not
+ *     claiming it as your own work. You are not allowed
+ *     to remove this message, unless being permitted by
+ *     the developer of the resource.
+ *
+ *     Spigot: https://www.spigotmc.org/resources/authors/ome_r.25629/
+ *     MC-Market: https://www.mc-market.org/resources/authors/40228/
+ *     Github: https://github.com/OmerBenGera?tab=repositories
+ *     Website: https://bg-software.com/
+ *
+ *******************************************************************************/
+
 package net.mackenziemolloy.SGPSellGUI.Utils;
 
 import org.bukkit.Bukkit;

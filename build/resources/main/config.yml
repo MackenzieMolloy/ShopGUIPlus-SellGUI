@@ -30,6 +30,28 @@ options:
   rounded_pricing: false
 
   #
+  # Whether trailing zero decimals should be removed (28.0, 28.00, etc --> 28)
+  #
+
+  remove_trailing_zeros: false
+
+  #
+  # Sounds that are played during certain events
+  #
+
+  sounds:
+    enabled: true
+    error_notifcation: true # Whether there should be a console output notifying you that a sound is invalid
+    pitch: 1
+    volume: 1
+    events:
+      # If you don't want a certain event to have a sound, just set to and invalid value
+      # NOTE: THESE DEFAULT VALUES ARE FOR 1.13+
+      open: BLOCK_CHEST_OPEN
+      success: ENTITY_VILLAGER_CELEBRATE
+      failed: ENTITY_VILLAGER_HURT
+
+  #
   # Action Bar Messages only work on versions 1.9+
   #
   action_bar_msgs: true
@@ -49,6 +71,7 @@ options:
   #
   # Similar to the SGP Item format: (EXAMPLE)
   # 1:
+  #   type: dummy <--- Not required, but may become applicable in future updates I make
   #   item:
   #     material: STONE
   #     damage: 1 <--- Only use if you're running 1.12 or below
