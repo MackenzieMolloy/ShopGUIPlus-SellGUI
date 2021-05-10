@@ -189,16 +189,12 @@ public final class CommandSellGUI implements TabExecutor {
         }
 
         int serverVersion = Integer.parseInt(Bukkit.getVersion().split("MC: ")[1].subSequence(0, Bukkit.getVersion().split("MC: ")[1].length()-1).toString().split("\\.")[1]);String sellGUITitle = ChatColor.translateAlternateColorCodes('&', this.plugin.configFile.getString("messages.sellgui_title"));
-
-        int GUISize = this.plugin.configFile.getInt("options.rows");
-
-        if(GUISize > 6 || GUISize < 1) {
-
-            GUISize = 6;
-
+        int guiSize = this.plugin.configFile.getInt("options.rows");
+        if(guiSize > 6 || guiSize < 1) {
+            guiSize = 6;
         }
 
-        Gui gui = new Gui(GUISize, sellGUITitle);
+        Gui gui = new Gui(guiSize, sellGUITitle);
         PlayerHandler.playSound(player, "open");
 
         List<Integer> ignoredSlots = new ArrayList<>();
@@ -212,7 +208,7 @@ public final class CommandSellGUI implements TabExecutor {
                 if (decorations.getString(ProcessItem[i] + ".item.material") == null ||
                         Material.matchMaterial(decorations.getString(ProcessItem[i] + ".item.material")) == null ||
                         decorations.getString(ProcessItem[i] + ".slot") == null ||
-                        decorations.getInt(ProcessItem[i] + ".slot") > (GUISize * 9) - 1 ||
+                        decorations.getInt(ProcessItem[i] + ".slot") > (guiSize * 9) - 1 ||
                         decorations.getInt(ProcessItem[i] + ".slot") < 0) {
 
                     this.plugin.getLogger().info("Error loading decoration item identified as " + ProcessItem[i]);
