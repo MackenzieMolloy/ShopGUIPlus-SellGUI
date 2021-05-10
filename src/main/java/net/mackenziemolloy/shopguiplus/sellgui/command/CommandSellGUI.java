@@ -64,10 +64,9 @@ public final class CommandSellGUI implements TabExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if(args.length == 0) return commandBase(sender, args);
+        if(args.length == 0) return commandBase(sender);
 
         String sub = args[0].toLowerCase(Locale.US);
-        String[] newArgs = (args.length < 2 ? new String[0] : Arrays.copyOfRange(args, 1, args.length));
         switch(sub) {
             case "rl":
             case "reload":
@@ -168,7 +167,7 @@ public final class CommandSellGUI implements TabExecutor {
         return true;
     }
 
-    private boolean commandBase(CommandSender sender, String[] args) {
+    private boolean commandBase(CommandSender sender) {
         if(!(sender instanceof Player)) {
             sender.sendMessage(ChatColor.RED + "Only players can execute this command.");
             return true;
