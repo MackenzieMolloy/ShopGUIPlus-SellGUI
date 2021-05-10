@@ -1,4 +1,4 @@
-package net.mackenziemolloy.SGPSellGUI.Utils;
+package net.mackenziemolloy.shopguiplus.sellgui.utility;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;

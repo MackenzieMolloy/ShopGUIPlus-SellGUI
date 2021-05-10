@@ -1,7 +1,7 @@
-package net.mackenziemolloy.SGPSellGUI.Utils;
+package net.mackenziemolloy.shopguiplus.sellgui.utility;
 
-import net.mackenziemolloy.SGPSellGUI.SellGUI;
-import org.apache.commons.lang.enums.EnumUtils;
+import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
+
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;

@@ -1,17 +1,13 @@
-package net.mackenziemolloy.SGPSellGUI.Utils;
+package net.mackenziemolloy.shopguiplus.sellgui.utility;
 
 import net.brcdev.shopgui.ShopGuiPlusApi;
 import net.brcdev.shopgui.economy.EconomyType;
-import net.mackenziemolloy.SGPSellGUI.SellGUI;
-import org.bukkit.Bukkit;
+import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
+
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.Async;
-import org.jetbrains.annotations.Nullable;
 
-import java.math.BigDecimal;
 import java.text.DecimalFormat;
-import java.util.List;
 
 public class ShopHandler {
 

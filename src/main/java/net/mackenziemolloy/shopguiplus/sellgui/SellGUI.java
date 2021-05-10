@@ -1,7 +1,7 @@
-package net.mackenziemolloy.SGPSellGUI;
+package net.mackenziemolloy.shopguiplus.sellgui;
 
-import net.mackenziemolloy.SGPSellGUI.Utils.CommentedConfiguration;
-import net.mackenziemolloy.SGPSellGUI.Utils.UpdateChecker;
+import net.mackenziemolloy.shopguiplus.sellgui.utility.CommentedConfiguration;
+import net.mackenziemolloy.shopguiplus.sellgui.utility.UpdateChecker;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;

@@ -8,16 +8,12 @@
     - Any other ideas?
 
 */
-package net.mackenziemolloy.SGPSellGUI;
+package net.mackenziemolloy.shopguiplus.sellgui;
 
 import me.mattstudios.mfgui.gui.guis.GuiItem;
-import net.brcdev.shopgui.exception.player.PlayerDataNotLoadedException;
-import net.brcdev.shopgui.modifier.PriceModifierActionType;
-import net.brcdev.shopgui.shop.ShopItem;
-import net.brcdev.shopgui.shop.ShopManager;
-import net.mackenziemolloy.SGPSellGUI.Utils.Hastebin;
-import net.mackenziemolloy.SGPSellGUI.Utils.PlayerHandler;
-import net.mackenziemolloy.SGPSellGUI.Utils.ShopHandler;
+import net.mackenziemolloy.shopguiplus.sellgui.utility.Hastebin;
+import net.mackenziemolloy.shopguiplus.sellgui.utility.PlayerHandler;
+import net.mackenziemolloy.shopguiplus.sellgui.utility.ShopHandler;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 
@@ -27,11 +23,11 @@ import net.brcdev.shopgui.economy.EconomyType;
 import net.brcdev.shopgui.provider.economy.EconomyProvider;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
+
 import org.apache.commons.lang.WordUtils;
-import org.apache.commons.lang.enums.EnumUtils;
+
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
