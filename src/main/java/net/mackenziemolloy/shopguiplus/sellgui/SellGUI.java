@@ -1,5 +1,6 @@
 package net.mackenziemolloy.shopguiplus.sellgui;
 
+import net.mackenziemolloy.shopguiplus.sellgui.command.CommandSellGUI;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.CommentedConfiguration;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.UpdateChecker;
 import org.bstats.bukkit.Metrics;
@@ -18,9 +19,8 @@ public class SellGUI extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        new Commands(this);
-
         sellGUI = this;
+        new CommandSellGUI(this).register();
 
         this.getLogger().info("*-*");
         this.getLogger().info("ShopGUIPlus SellGUI");
