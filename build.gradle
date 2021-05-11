@@ -8,13 +8,14 @@ version '1.0.8'
 //sourceCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
+	mavenLocal()
     mavenCentral()
 
-    maven({ url = "https://papermc.io/repo/repository/maven-public/" })
-    maven { url = 'https://repo.mattstudios.me/artifactory/public' }
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
-    maven { url 'https://repo.codemc.org/repository/maven-public' }
-    maven { url 'https://jitpack.io' }
+    maven { url = 'https://papermc.io/repo/repository/maven-public/' }
+    maven { url = 'https://repo.mattstudios.me/artifactory/public/' }
+    maven { url = 'https://oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url = 'https://repo.codemc.org/repository/maven-public/' }
+    maven { url = 'https://jitpack.io/' }
 
 }
 
@@ -32,7 +33,6 @@ shadowJar {
     relocate "me.mattstudios.mfgui", "net.mackenziemolloy.SGPSellGUI"
     relocate "org.bstats.bukkit", "net.mackenziemolloy.SGPSellGUI"
     minimize()
-
 }
 
 tasks.build.dependsOn tasks.shadowJar

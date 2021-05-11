@@ -1,4 +1,4 @@
-package net.mackenziemolloy.SGPSellGUI.Utils;
+package net.mackenziemolloy.shopguiplus.sellgui.utility;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-
 import javax.net.ssl.HttpsURLConnection;
 
 public class Hastebin {

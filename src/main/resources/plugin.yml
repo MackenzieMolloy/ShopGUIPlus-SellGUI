@@ -1,11 +1,21 @@
 name: "ShopGUIPlus-SellGUI"
-main: "net.mackenziemolloy.SGPSellGUI.SellGUI"
-authors: ["Mackenzie Molloy"]
+prefix: "ShopGUIPlus Sell GUI"
+description: "An addon for ShopGUIPlus that enables players to easily sell items in seconds, without having to go searching through the shops for them."
+website: "https://www.spigotmc.org/resources/85170/"
+
+main: "net.mackenziemolloy.shopguiplus.sellgui.SellGUI"
 version: "1.0.8"
-api-version: "1.15"
-softdepend: [ShopGUIPlus]
+api-version: "1.13"
+
+authors:
+  - "Mackenzie Molloy"
+
+depend:
+  - "ShopGUIPlus"
 
 commands:
   sellgui:
-    aliases: [sg, sell]
-    description: Sell COmmand
+    description: "Sell Command"
+    aliases:
+      - "sg"
+      - "sell"

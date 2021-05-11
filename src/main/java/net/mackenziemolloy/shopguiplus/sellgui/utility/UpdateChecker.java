@@ -1,13 +1,13 @@
-package net.mackenziemolloy.SGPSellGUI.Utils;
-
-import org.bukkit.Bukkit;
-import org.bukkit.plugin.java.JavaPlugin;
+package net.mackenziemolloy.shopguiplus.sellgui.utility;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Scanner;
 import java.util.function.Consumer;
+
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class UpdateChecker {
 
