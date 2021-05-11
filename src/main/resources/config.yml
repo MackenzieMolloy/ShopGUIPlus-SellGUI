@@ -45,7 +45,7 @@ options:
     pitch: 1
     volume: 1
     events:
-      # If you don't want a certain event to have a sound, just set to and invalid value
+      # If you don't want a certain event to have a sound, just set to an invalid value
       # NOTE: THESE DEFAULT VALUES ARE FOR 1.13+
       open: BLOCK_CHEST_OPEN
       success: ENTITY_VILLAGER_CELEBRATE
