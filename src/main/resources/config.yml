@@ -25,6 +25,7 @@ options:
 
   #
   # Whether prices should be rounded to 2 decimal places, or not.
+  # This also formats prices with comma separation. IE: 1800 -> 1,800
   #
 
   rounded_pricing: false

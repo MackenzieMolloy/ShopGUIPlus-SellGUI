@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-import net.kyori.adventure.text.Component;
+//import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -198,7 +198,8 @@ public final class CommandSellGUI implements TabExecutor {
         }
 
 
-        Gui gui = Gui.gui().title(Component.text(sellGUITitle)).rows(guiSize).create();
+        Gui gui = new Gui(guiSize, sellGUITitle);
+        //Gui gui = Gui.gui().title(Component.text(sellGUITitle)).rows(guiSize).create();
         PlayerHandler.playSound(player, "open");
 
         List<Integer> ignoredSlotList = new ArrayList<>();
@@ -343,7 +344,7 @@ public final class CommandSellGUI implements TabExecutor {
                 for(Map.Entry<EconomyType, Double> entry : moneyMap.entrySet()) {
                     EconomyProvider economyProvider = ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(entry.getKey());
                     economyProvider.deposit(player, entry.getValue());
-                    formattedPricing.append(economyProvider.getCurrencyPrefix()).append(ShopHandler.getFormattedPrice(entry.getValue(), entry.getKey())).append(economyProvider.getCurrencySuffix()).append(", ");
+                    formattedPricing.append(economyProvider.getCurrencyPrefix()).append(ShopHandler.getFormattedNumber(entry.getValue())).append(economyProvider.getCurrencySuffix()).append(", ");
 
                 }
 
