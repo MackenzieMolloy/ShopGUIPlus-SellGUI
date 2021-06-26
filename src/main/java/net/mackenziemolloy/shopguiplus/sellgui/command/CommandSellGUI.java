@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -34,8 +35,8 @@ import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 
-import me.mattstudios.mfgui.gui.guis.Gui;
-import me.mattstudios.mfgui.gui.guis.GuiItem;
+import dev.triumphteam.gui.guis.Gui;
+import dev.triumphteam.gui.guis.GuiItem;
 import net.brcdev.shopgui.ShopGuiPlugin;
 import net.brcdev.shopgui.ShopGuiPlusApi;
 import net.brcdev.shopgui.economy.EconomyType;
@@ -46,6 +47,7 @@ import net.mackenziemolloy.shopguiplus.sellgui.utility.PlayerHandler;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.ShopHandler;
 import org.apache.commons.lang.WordUtils;
 import org.jetbrains.annotations.Nullable;
+
 
 public final class CommandSellGUI implements TabExecutor {
     private final SellGUI plugin;
@@ -195,7 +197,8 @@ public final class CommandSellGUI implements TabExecutor {
             guiSize = 6;
         }
 
-        Gui gui = new Gui(guiSize, sellGUITitle);
+
+        Gui gui = Gui.gui().title(Component.text(sellGUITitle)).rows(guiSize).create();
         PlayerHandler.playSound(player, "open");
 
         List<Integer> ignoredSlotList = new ArrayList<>();
@@ -359,7 +362,7 @@ public final class CommandSellGUI implements TabExecutor {
                             ItemStack materialItemStack = entry.getKey();
 
                             double profits = ShopHandler.getItemSellPrice(materialItemStack, player) * damageEntry.getValue();
-                            String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(ShopHandler.getEconomyType(materialItemStack, player)).getCurrencyPrefix() + ShopHandler.getFormattedPrice(profits, ShopHandler.getEconomyType(materialItemStack, player)) + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(ShopHandler.getEconomyType(materialItemStack, player)).getCurrencySuffix();
+                            String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(ShopHandler.getEconomyType(materialItemStack, player)).getCurrencyPrefix() + ShopHandler.getFormattedNumber(profits) + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(ShopHandler.getEconomyType(materialItemStack, player)).getCurrencySuffix();
 
                             String itemNameFormatted = WordUtils.capitalize(materialItemStack.getType().name().replace("AETHER_LEGACY_", "").replace("LOST_AETHER_", "").replace("_", " ").toLowerCase());
 
@@ -373,7 +376,7 @@ public final class CommandSellGUI implements TabExecutor {
 
                             receiptList.append("\n").append(this.plugin.configFile.getString(
                                     "messages.receipt_item_layout").replace("{amount}",
-                                    String.valueOf(damageEntry.getValue())).replace(
+                                    String.valueOf(ShopHandler.getFormattedNumber((double)damageEntry.getValue()))).replace(
                                     "{item}", itemNameFormatted).replace("{price}", profitsFormatted));
 
                             itemList.append(itemNameFormatted).append(", ");
@@ -381,6 +384,8 @@ public final class CommandSellGUI implements TabExecutor {
                         }
                     }
                 }
+
+                String itemAmountFormatted = ShopHandler.getFormattedNumber((double) itemAmount);
 
                 if(this.plugin.configFile.getInt("options.receipt_type") == 1) {
                     String msg = ChatColor.translateAlternateColorCodes('&', this.plugin.configFile.getString("messages.items_sold").replace("{earning}", formattedPricing).replace("{receipt}", "").replace("{list}", itemList.substring(0, itemList.length()-2)).replace("{amount}", String.valueOf(itemAmount)));
@@ -402,21 +407,21 @@ public final class CommandSellGUI implements TabExecutor {
                             .replace("{earning}", formattedPricing)
                             .replace("{receipt}", "")
                             .replace("{list}", itemList.substring(0, itemList.length()-2))
-                            .replace("{amount}", String.valueOf(itemAmount)));
+                            .replace("{amount}", itemAmountFormatted));
 
                     player.sendMessage(msg);
 
                 }
 
                 if(this.plugin.configFile.getBoolean("options.sell_titles")) {
-                    @Nullable String sellTitle = ChatColor.translateAlternateColorCodes('&', this.plugin.configFile.getString("messages.sell_title").replace("{earning}", formattedPricing).replace("{amount}", String.valueOf(itemAmount)));
-                    @Nullable String sellSubtitle = ChatColor.translateAlternateColorCodes('&', this.plugin.configFile.getString("messages.sell_subtitle").replace("{earning}", formattedPricing).replace("{amount}", String.valueOf(itemAmount)));
+                    @Nullable String sellTitle = ChatColor.translateAlternateColorCodes('&', this.plugin.configFile.getString("messages.sell_title").replace("{earning}", formattedPricing).replace("{amount}", itemAmountFormatted));
+                    @Nullable String sellSubtitle = ChatColor.translateAlternateColorCodes('&', this.plugin.configFile.getString("messages.sell_subtitle").replace("{earning}", formattedPricing).replace("{amount}", itemAmountFormatted));
                     player.sendTitle(sellTitle, sellSubtitle);
                 }
 
                 if(this.plugin.configFile.getBoolean("options.action_bar_msgs")) {
                     if(serverVersion >= 9) {
-                        String actionBarMessage = ChatColor.translateAlternateColorCodes('&', this.plugin.configFile.getString("messages.action_bar_items_sold").replace("{earning}", formattedPricing).replace("{amount}", String.valueOf(itemAmount)));
+                        String actionBarMessage = ChatColor.translateAlternateColorCodes('&', this.plugin.configFile.getString("messages.action_bar_items_sold").replace("{earning}", formattedPricing).replace("{amount}", itemAmountFormatted));
                         player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(actionBarMessage));
                     }
                 }

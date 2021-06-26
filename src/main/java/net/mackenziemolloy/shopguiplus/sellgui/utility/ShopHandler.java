@@ -64,6 +64,26 @@ public class ShopHandler {
 
     }
 
+    public static String getFormattedNumber(Double numberToFormat) {
+
+        SellGUI sellGUI = SellGUI.getInstance();
+        String numberToReturn =  numberToFormat.toString();
+
+        if (sellGUI.configFile.getBoolean("options.rounded_pricing")) {
+
+            final DecimalFormat formatToApply = new DecimalFormat("#,##0.00");
+            numberToReturn = formatToApply.format(numberToFormat);
+        }
+
+        if(sellGUI.configFile.getBoolean("options.remove_trailing_zeros")) {
+            if(Integer.valueOf(numberToReturn.split("\\.")[1]) == 0) {
+                numberToReturn = numberToReturn.split("\\.")[0];
+            }
+        }
+
+        return numberToReturn;
+    }
+
 }
 
         /*if(sellGUI.configFile.getBoolean("options.rounded_pricing")) {
