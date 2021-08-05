@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-//import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -31,6 +30,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.util.StringUtil;
 import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -45,8 +45,11 @@ import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.Hastebin;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.PlayerHandler;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.ShopHandler;
+import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.MessageUtility;
 import org.apache.commons.lang.WordUtils;
 import org.jetbrains.annotations.Nullable;
+
+//import net.kyori.adventure.text.Component;
 
 
 public final class CommandSellGUI implements TabExecutor {
@@ -440,9 +443,15 @@ public final class CommandSellGUI implements TabExecutor {
     private void sendMessage(CommandSender sender, String path) {
         String message = this.plugin.configFile.getString("messages." + path);
         if(message == null || message.isEmpty()) return;
-
-        String colored = ChatColor.translateAlternateColorCodes('&', message);
-        sender.sendMessage(colored);
+        
+        String messageColored = MessageUtility.color(message);
+        if(sender instanceof Player) {
+            Player player = (Player) sender;
+            BaseComponent[] messageComponents = TextComponent.fromLegacyText(messageColored);
+            player.spigot().sendMessage(messageComponents);
+        } else {
+            sender.sendMessage(messageColored);
+        }
     }
 
     private String getMemoryUsage() {
