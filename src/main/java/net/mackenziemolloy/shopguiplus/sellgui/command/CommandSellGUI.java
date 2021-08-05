@@ -11,8 +11,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
-//import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -31,8 +31,9 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.util.StringUtil;
 import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.HoverEvent.Action;
 import net.md_5.bungee.api.chat.TextComponent;
 
 import dev.triumphteam.gui.guis.Gui;
@@ -45,8 +46,11 @@ import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.Hastebin;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.PlayerHandler;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.ShopHandler;
+import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.MessageUtility;
 import org.apache.commons.lang.WordUtils;
 import org.jetbrains.annotations.Nullable;
+
+//import net.kyori.adventure.text.Component;
 
 
 public final class CommandSellGUI implements TabExecutor {
@@ -374,12 +378,15 @@ public final class CommandSellGUI implements TabExecutor {
                             }
 
                             if(serverVersion <= 12 && !this.plugin.configFile.getBoolean("options.show_item_damage")) itemNameFormatted += ":" + damageEntry.getKey();
+    
+                            String finalItemNameFormatted = itemNameFormatted;
+                            String itemLine = getMessage("receipt_item_layout", message -> message
+                                    .replace("{amount}", String.valueOf(ShopHandler.getFormattedNumber(
+                                            (double)damageEntry.getValue())))
+                                    .replace("{item}", finalItemNameFormatted)
+                                    .replace("{price}", profitsFormatted));
 
-                            receiptList.append("\n").append(this.plugin.configFile.getString(
-                                    "messages.receipt_item_layout").replace("{amount}",
-                                    String.valueOf(ShopHandler.getFormattedNumber((double)damageEntry.getValue()))).replace(
-                                    "{item}", itemNameFormatted).replace("{price}", profitsFormatted));
-
+                            receiptList.append(itemLine);
                             itemList.append(itemNameFormatted).append(", ");
 
                         }
@@ -389,29 +396,33 @@ public final class CommandSellGUI implements TabExecutor {
                 String itemAmountFormatted = ShopHandler.getFormattedNumber((double) itemAmount);
 
                 if(this.plugin.configFile.getInt("options.receipt_type") == 1) {
-                    String msg = ChatColor.translateAlternateColorCodes('&', this.plugin.configFile.getString("messages.items_sold").replace("{earning}", formattedPricing).replace("{receipt}", "").replace("{list}", itemList.substring(0, itemList.length()-2)).replace("{amount}", String.valueOf(itemAmount)));
-                    String receiptName = ChatColor.translateAlternateColorCodes('&', this.plugin.configFile.getString("messages.receipt_text"));
-
-                    String receipt = ChatColor.translateAlternateColorCodes('&', this.plugin.configFile.getString("messages.receipt_title") + receiptList);
-                    TextComponent test = new TextComponent(" " + receiptName);
-                    test.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                            new ComponentBuilder(receipt).create()));
-
-                    TextComponent test2 = new TextComponent(msg);
-
-                    player.spigot().sendMessage(test2, test);
+                    int finalItemAmount = itemAmount;
+                    StringBuilder finalFormattedPricing1 = formattedPricing;
+                    
+                    TextComponent itemsSoldComponent = getTextComponentMessage("items_sold", message -> message
+                            .replace("{earning}", finalFormattedPricing1)
+                            .replace("{receipt}", "")
+                            .replace("{list}", itemList.substring(0, itemList.length()-2))
+                            .replace("{amount}", String.valueOf(finalItemAmount)));
+                    itemsSoldComponent.addExtra(" ");
+                    
+                    String receiptHoverMessage = (getMessage("receipt_title", null) + receiptList);
+                    TextComponent receiptNameComponent = getTextComponentMessage("receipt_text", null);
+                    BaseComponent[] hoverEventComponents = TextComponent.fromLegacyText(receiptHoverMessage);
+                    
+                    HoverEvent hoverEvent = new HoverEvent(Action.SHOW_TEXT, hoverEventComponents);
+                    receiptNameComponent.setHoverEvent(hoverEvent);
+                    
+                    player.spigot().sendMessage(itemsSoldComponent, receiptNameComponent);
 
                 }
 
                 else {
-                    String msg = ChatColor.translateAlternateColorCodes('&', this.plugin.configFile.getString("messages.items_sold")
-                            .replace("{earning}", formattedPricing)
+                    StringBuilder finalFormattedPricing = formattedPricing;
+                    sendMessage(player, "items_sold", message -> message.replace("{earning}", finalFormattedPricing)
                             .replace("{receipt}", "")
                             .replace("{list}", itemList.substring(0, itemList.length()-2))
                             .replace("{amount}", itemAmountFormatted));
-
-                    player.sendMessage(msg);
-
                 }
 
                 if(this.plugin.configFile.getBoolean("options.sell_titles")) {
@@ -436,13 +447,38 @@ public final class CommandSellGUI implements TabExecutor {
         gui.open(player);
         return true;
     }
+    
+    private String getMessage(String path, @Nullable Function<String, String> replacer) {
+        String message = this.plugin.configFile.getString("messages." + path);
+        if(message == null || message.isEmpty()) return "";
+    
+        if(replacer != null) {
+            message = replacer.apply(message);
+        }
+    
+        return MessageUtility.color(message);
+    }
+    
+    private TextComponent getTextComponentMessage(String path, @Nullable Function<String, String> replacer) {
+        String message = getMessage(path, replacer);
+        if(message.isEmpty()) return new TextComponent("");
+        else return new TextComponent(TextComponent.fromLegacyText(message));
+    }
 
     private void sendMessage(CommandSender sender, String path) {
-        String message = this.plugin.configFile.getString("messages." + path);
-        if(message == null || message.isEmpty()) return;
-
-        String colored = ChatColor.translateAlternateColorCodes('&', message);
-        sender.sendMessage(colored);
+        sendMessage(sender, path, null);
+    }
+    
+    private void sendMessage(CommandSender sender, String path, @Nullable Function<String, String> replacer) {
+        String message = getMessage(path, replacer);
+        if(message.isEmpty()) return;
+        
+        if(sender instanceof Player) {
+            TextComponent textComponent = new TextComponent(message);
+            ((Player) sender).spigot().sendMessage(textComponent);
+        } else {
+            sender.sendMessage(message);
+        }
     }
 
     private String getMemoryUsage() {
