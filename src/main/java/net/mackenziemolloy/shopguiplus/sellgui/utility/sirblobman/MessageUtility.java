@@ -1,5 +1,7 @@
 package net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,6 +18,15 @@ public final class MessageUtility {
         }
 
         return org.bukkit.ChatColor.translateAlternateColorCodes('&', message);
+    }
+    
+    public static List<String> colorList(Iterable<String> messageList) {
+        List<String> colorList = new ArrayList<>();
+        for(String message : messageList) {
+            String color = color(message);
+            colorList.add(color);
+        }
+        return colorList;
     }
     
     public static String translateHexColorCodes(String startTag, String endTag, String message) {

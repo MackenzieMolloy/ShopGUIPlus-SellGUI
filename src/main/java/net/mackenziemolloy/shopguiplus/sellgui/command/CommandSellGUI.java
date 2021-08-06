@@ -6,21 +6,27 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -43,10 +49,12 @@ import net.brcdev.shopgui.ShopGuiPlusApi;
 import net.brcdev.shopgui.economy.EconomyType;
 import net.brcdev.shopgui.provider.economy.EconomyProvider;
 import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
+import net.mackenziemolloy.shopguiplus.sellgui.utility.CommentedConfiguration;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.Hastebin;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.PlayerHandler;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.ShopHandler;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.MessageUtility;
+import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.VersionUtility;
 import org.apache.commons.lang.WordUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,6 +140,7 @@ public final class CommandSellGUI implements TabExecutor {
             return true;
         }
 
+        CommentedConfiguration configuration = this.plugin.getConfiguration();
         PluginManager pluginManager = Bukkit.getPluginManager();
         Plugin[] pluginArray = pluginManager.getPlugins();
         List<String> pluginInfoList = new ArrayList<>();
@@ -155,7 +164,7 @@ public final class CommandSellGUI implements TabExecutor {
                 "- Online Mode: " + Bukkit.getOnlineMode() + "\n" +
                 "- Memory Usage: " + getMemoryUsage() +
                 "\n\n| Plugins\n" + String.join("\n", pluginInfoList) +
-                "\n\n| Plugin Configuration\n\n" + this.plugin.configuration.saveToString();
+                "\n\n| Plugin Configuration\n\n" + configuration.saveToString();
         try {
             String pasteUrl = new Hastebin().post(pasteRaw, true);
             String pastedDumpMsg = ChatColor.translateAlternateColorCodes('&',
@@ -189,115 +198,25 @@ public final class CommandSellGUI implements TabExecutor {
             sendMessage(player, "no_permission");
             return true;
         }
-
-        ShopGuiPlugin shopGuiPlugin = ShopGuiPlusApi.getPlugin();
-        List<String> invalidGameModeList = shopGuiPlugin.getConfigMain().getConfig()
-                .getStringList("disableShopsInGamemodes");
-        if(invalidGameModeList.contains(player.getGameMode().name())
-                && !player.hasPermission("shopguiplus.bypassgamemode")) {
-            String gamemodeFormatted = WordUtils.capitalize(player.getGameMode().toString().toLowerCase());
-            String gamemodeNotAllowed = ChatColor.translateAlternateColorCodes('&',
-                    this.plugin.configuration.getString("messages.gamemode_not_allowed")
-                            .replace("{gamemode}", gamemodeFormatted));
-            player.sendMessage(gamemodeNotAllowed);
+        
+        if(!checkGameMode(player)) {
             return true;
         }
+    
+        int minorVersion = VersionUtility.getMinorVersion();
+        CommentedConfiguration configuration = this.plugin.getConfiguration();
 
-        int serverVersion = Integer.parseInt(Bukkit.getVersion().split("MC: ")[1].subSequence(0,
-                Bukkit.getVersion().split("MC: ")[1].length()-1).toString().split("\\.")[1]);
-        String sellGUITitle = ChatColor.translateAlternateColorCodes('&',
-                this.plugin.configuration.getString("messages.sellgui_title"));
-        int guiSize = this.plugin.configuration.getInt("options.rows");
+        int guiSize = configuration.getInt("options.rows");
         if(guiSize > 6 || guiSize < 1) {
             guiSize = 6;
         }
-
-
-        Gui gui = new Gui(guiSize, sellGUITitle);
-        //Gui gui = Gui.gui().title(Component.text(sellGUITitle)).rows(guiSize).create();
+        
+        String sellGuiTitle = getMessage("sellgui_title", null);
+        Gui gui = new Gui(guiSize, sellGuiTitle, Collections.emptySet());
         PlayerHandler.playSound(player, "open");
 
-        List<Integer> ignoredSlotList = new ArrayList<>();
-
-        ConfigurationSection sectionOptionsDecorations = this.plugin.configuration.getConfigurationSection(
-                "options.decorations");
-        if(!(sectionOptionsDecorations == null) && sectionOptionsDecorations.getKeys(false).size() > 0) {
-            for (int i = 0; i < sectionOptionsDecorations.getKeys(false).size(); i++) {
-                Object[] processItem = sectionOptionsDecorations.getKeys(false).toArray();
-
-                String materialName = sectionOptionsDecorations.getString(processItem[i] + ".item.material");
-                Material material;
-                if (materialName == null || (material = Material.matchMaterial(materialName)) == null ||
-                        sectionOptionsDecorations.getString(processItem[i] + ".slot") == null ||
-                        sectionOptionsDecorations.getInt(processItem[i] + ".slot") > (guiSize * 9) - 1 ||
-                        sectionOptionsDecorations.getInt(processItem[i] + ".slot") < 0) {
-                    this.plugin.getLogger().info("Error loading decoration item identified as "
-                            + processItem[i]);
-                    continue;
-
-                }
-
-                ItemStack toAdd = new ItemStack(material);
-
-                int durability = sectionOptionsDecorations.getInt(processItem[i] + ".item.damage", 0);
-                if(durability != 0) {
-                    setDurability(toAdd, serverVersion, durability);
-                }
-
-                int quantity = sectionOptionsDecorations.getInt(processItem[i] + ".item.quantity", 1);
-                toAdd.setAmount(quantity);
-
-                ItemMeta toAddMeta = toAdd.getItemMeta();
-                if(toAddMeta != null) {
-                    String displayName = sectionOptionsDecorations.getString(processItem[i] + ".item.name");
-                    if (displayName != null) {
-                        String ItemName = ChatColor.translateAlternateColorCodes('&', displayName);
-                        toAddMeta.setDisplayName(ItemName);
-                    }
-
-                    List<String> loreList = sectionOptionsDecorations.getStringList(processItem[i] +
-                            ".item.lore");
-                    if(!loreList.isEmpty()) {
-                        List<String> loreToSet = new ArrayList<>();
-                        for(int ii = 0; ii < sectionOptionsDecorations.getStringList(processItem[i] +
-                                ".item.lore").size(); ii++) {
-                            List<String> loreLines = sectionOptionsDecorations.getStringList(
-                                    processItem[i] + ".item.lore");
-                            String loreLineToAdd = ChatColor.translateAlternateColorCodes('&',
-                                    loreLines.get(ii));
-                            loreToSet.add(loreLineToAdd);
-
-                        }
-
-                        toAddMeta.setLore(loreToSet);
-                    }
-                }
-
-                List<String> consoleCommandList = sectionOptionsDecorations.getStringList(
-                        processItem[i] + ".commandsOnClickConsole");
-                List<String> playerCommandList = sectionOptionsDecorations.getStringList(
-                        processItem[i] + ".commandsOnClick");
-                toAdd.setItemMeta(toAddMeta);
-
-                GuiItem guiItem = new GuiItem(toAdd, event -> {
-                    event.setCancelled(true);
-                    HumanEntity human = event.getWhoClicked();
-                    CommandSender console = Bukkit.getConsoleSender();
-                    String humanName = human.getName();
-
-                    for (String consoleCommand : consoleCommandList) {
-                        Bukkit.dispatchCommand(console, consoleCommand.replace("%PLAYER%", humanName));
-                    }
-
-                    for (String playerCommand : playerCommandList) {
-                        Bukkit.dispatchCommand(human, playerCommand.replace("%PLAYER%", humanName));
-                    }
-                });
-
-                gui.setItem(sectionOptionsDecorations.getInt(processItem[i] + ".slot"), guiItem);
-                ignoredSlotList.add(sectionOptionsDecorations.getInt(processItem[i] + ".slot"));
-            }
-        }
+        Set<Integer> ignoredSlotSet = new HashSet<>();
+        setDecorationItems(configuration, gui, ignoredSlotSet);
 
         gui.setCloseGuiAction(event -> {
             Map<ItemStack, Map<Short, Integer>> soldMap2 = new HashMap<>();
@@ -313,7 +232,7 @@ public final class CommandSellGUI implements TabExecutor {
                 ItemStack i = inventory.getItem(a);
                 if (i == null) continue;
 
-                if(ignoredSlotList.contains(a)) {
+                if(ignoredSlotSet.contains(a)) {
                     continue;
                 }
 
@@ -365,7 +284,7 @@ public final class CommandSellGUI implements TabExecutor {
             if (totalPrice > 0) {
                 PlayerHandler.playSound((Player) event.getPlayer(), "success");
                 StringBuilder formattedPricing = new StringBuilder();
-                for(Map.Entry<EconomyType, Double> entry : moneyMap.entrySet()) {
+                for(Entry<EconomyType, Double> entry : moneyMap.entrySet()) {
                     EconomyProvider economyProvider = ShopGuiPlusApi.getPlugin().getEconomyManager()
                             .getEconomyProvider(entry.getKey());
                     economyProvider.deposit(player, entry.getValue());
@@ -384,10 +303,10 @@ public final class CommandSellGUI implements TabExecutor {
                 StringBuilder itemList = new StringBuilder();
 
 
-                if(this.plugin.configuration.getInt("options.receipt_type") == 1
-                        || this.plugin.configuration.getString("messages.items_sold").contains("{list}")) {
-                    for(Map.Entry<ItemStack, Map<Short, Integer>> entry : soldMap2.entrySet()) {
-                        for(Map.Entry<Short, Integer> damageEntry : entry.getValue().entrySet()) {
+                if(configuration.getInt("options.receipt_type") == 1
+                        || configuration.getString("messages.items_sold").contains("{list}")) {
+                    for(Entry<ItemStack, Map<Short, Integer>> entry : soldMap2.entrySet()) {
+                        for(Entry<Short, Integer> damageEntry : entry.getValue().entrySet()) {
                             @Deprecated
                             ItemStack materialItemStack = entry.getKey();
 
@@ -411,7 +330,7 @@ public final class CommandSellGUI implements TabExecutor {
                                 }
                             }
 
-                            if(serverVersion <= 12 && !this.plugin.configuration.getBoolean(
+                            if(minorVersion <= 12 && !configuration.getBoolean(
                                     "options.show_item_damage")) itemNameFormatted += ":"
                                     + damageEntry.getKey();
     
@@ -430,13 +349,11 @@ public final class CommandSellGUI implements TabExecutor {
                 }
 
                 String itemAmountFormatted = ShopHandler.getFormattedNumber((double) itemAmount);
-
-                if(this.plugin.configuration.getInt("options.receipt_type") == 1) {
+                if(configuration.getInt("options.receipt_type") == 1) {
                     int finalItemAmount = itemAmount;
                     StringBuilder finalFormattedPricing1 = formattedPricing;
                     
-                    TextComponent itemsSoldComponent = getTextComponentMessage("items_sold",
-                            message -> message
+                    TextComponent itemsSoldComponent = getTextComponentMessage("items_sold", message -> message
                             .replace("{earning}", finalFormattedPricing1)
                             .replace("{receipt}", "")
                             .replace("{list}", itemList.substring(0, itemList.length()-2))
@@ -463,26 +380,24 @@ public final class CommandSellGUI implements TabExecutor {
                             .replace("{amount}", itemAmountFormatted));
                 }
 
-                if(this.plugin.configuration.getBoolean("options.sell_titles")) {
-                    @Nullable String sellTitle = ChatColor.translateAlternateColorCodes('&',
-                            this.plugin.configuration.getString("messages.sell_title")
-                                    .replace("{earning}", formattedPricing).replace("{amount}",
-                                            itemAmountFormatted));
-                    @Nullable String sellSubtitle = ChatColor.translateAlternateColorCodes('&',
-                            this.plugin.configuration.getString("messages.sell_subtitle")
-                                    .replace("{earning}", formattedPricing).replace("{amount}",
-                                            itemAmountFormatted));
+                if(configuration.getBoolean("options.sell_titles")) {
+                    StringBuilder finalFormattedPricing2 = formattedPricing;
+                    String sellTitle = getMessage("sell_title", message -> message
+                            .replace("{earning}", finalFormattedPricing2).
+                            replace("{amount}", itemAmountFormatted));
+                    String sellSubtitle = getMessage("sell_subtitle", message -> message
+                            .replace("{earning}", finalFormattedPricing2).
+                            replace("{amount}", itemAmountFormatted));
                     player.sendTitle(sellTitle, sellSubtitle);
                 }
 
-                if(this.plugin.configuration.getBoolean("options.action_bar_msgs")) {
-                    if(serverVersion >= 9) {
-                        String actionBarMessage = ChatColor.translateAlternateColorCodes('&',
-                                this.plugin.configuration.getString("messages.action_bar_items_sold")
-                                        .replace("{earning}", formattedPricing).replace("{amount}",
-                                                itemAmountFormatted));
-                        player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
-                                new TextComponent(actionBarMessage));
+                if(configuration.getBoolean("options.action_bar_msgs")) {
+                    if(minorVersion >= 8) {
+                        StringBuilder finalFormattedPricing3 = formattedPricing;
+                        TextComponent actionBarMessage = getTextComponentMessage("action_bar_items_sold",
+                                message -> message.replace("{earning}", finalFormattedPricing3)
+                                .replace("{amount}", itemAmountFormatted));
+                        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, actionBarMessage);
                     }
                 }
 
@@ -496,8 +411,96 @@ public final class CommandSellGUI implements TabExecutor {
         return true;
     }
     
+    private boolean checkGameMode(Player player) {
+        ShopGuiPlugin shopGui = ShopGuiPlusApi.getPlugin();
+        FileConfiguration configuration = shopGui.getConfigMain().getConfig();
+        List<String> disabledGameModeList = configuration.getStringList("disableShopsInGamemodes");
+    
+        GameMode gameMode = player.getGameMode();
+        String gameModeName = gameMode.name();
+        if(disabledGameModeList.contains(gameModeName)) {
+            String gameModeFormatted = WordUtils.capitalize(gameModeName);
+            sendMessage(player, "gamemode_not_allowed", message ->
+                    message.replace("{gamemode}", gameModeFormatted));
+            return false;
+        }
+        
+        return true;
+    }
+    
+    private void setDecorationItems(ConfigurationSection configuration, Gui gui, Set<Integer> ignoredSlotSet) {
+        ConfigurationSection sectionDecorations = configuration.getConfigurationSection("options.decorations");
+        if(sectionDecorations != null) {
+            Set<String> sectionDecorationsKeys = sectionDecorations.getKeys(false);
+            for(String key : sectionDecorationsKeys) {
+                ConfigurationSection section = sectionDecorations.getConfigurationSection(key);
+                if(section == null) continue;
+            
+                Material material;
+                String materialName = section.getString("item.material");
+                if(materialName == null || (material = Material.matchMaterial(materialName)) == null
+                        || !section.isInt("slot") || section.getInt("slot") > ((gui.getRows() * 9) - 1)
+                        || section.getInt("slot") < 0) {
+                    Logger logger = this.plugin.getLogger();
+                    logger.warning("Failed to load decoration item with id '" + key + "'.");
+                    continue;
+                }
+            
+                ItemStack item = new ItemStack(material);
+                int damage = section.getInt("damage", 0);
+                if(damage != 0) {
+                    setItemDamage(item, damage);
+                }
+            
+                int quantity = section.getInt("item.quantity", 1);
+                item.setAmount(quantity);
+            
+                ItemMeta itemMeta = item.getItemMeta();
+                if(itemMeta != null) {
+                    String displayName = section.getString("item.name");
+                    if(displayName != null) {
+                        displayName = MessageUtility.color(displayName);
+                        itemMeta.setDisplayName(displayName);
+                    }
+                
+                    List<String> loreList = section.getStringList("item.lore");
+                    if(!loreList.isEmpty()) {
+                        loreList = MessageUtility.colorList(loreList);
+                        itemMeta.setLore(loreList);
+                    }
+                
+                    item.setItemMeta(itemMeta);
+                }
+            
+            
+                List<String> consoleCommandList = section.getStringList("commandsOnClickConsole");
+                List<String> playerCommandList = section.getStringList("commandsOnClick");
+            
+                GuiItem guiItem = new GuiItem(item, e -> {
+                    e.setCancelled(true);
+                    HumanEntity human = e.getWhoClicked();
+                    String humanName = human.getName();
+                
+                    CommandSender console = Bukkit.getConsoleSender();
+                    for(String consoleCommand : consoleCommandList) {
+                        Bukkit.dispatchCommand(console, consoleCommand.replace("%PLAYER%", humanName));
+                    }
+                
+                    for(String playerCommand : playerCommandList) {
+                        Bukkit.dispatchCommand(human, playerCommand.replace("%PLAYER%", humanName));
+                    }
+                });
+            
+                int slot = section.getInt("slot");
+                gui.setItem(slot, guiItem);
+                ignoredSlotSet.add(slot);
+            }
+        }
+    }
+    
     private String getMessage(String path, @Nullable Function<String, String> replacer) {
-        String message = this.plugin.configuration.getString("messages." + path);
+        CommentedConfiguration configuration = this.plugin.getConfiguration();
+        String message = configuration.getString("messages." + path);
         if(message == null || message.isEmpty()) return "";
     
         if(replacer != null) {
@@ -522,7 +525,7 @@ public final class CommandSellGUI implements TabExecutor {
         if(message.isEmpty()) return;
         
         if(sender instanceof Player) {
-            TextComponent textComponent = new TextComponent(message);
+            TextComponent textComponent = new TextComponent(TextComponent.fromLegacyText(message));
             ((Player) sender).spigot().sendMessage(textComponent);
         } else {
             sender.sendMessage(message);
@@ -543,16 +546,18 @@ public final class CommandSellGUI implements TabExecutor {
     }
 
     @SuppressWarnings("deprecation")
-    private void setDurability(ItemStack item, int version, int durability) {
-        if(version < 13) {
-            item.setDurability((short) durability);
+    private void setItemDamage(ItemStack item, int damage) {
+        int minorVersion = VersionUtility.getMinorVersion();
+        if(minorVersion < 13) {
+            short durability = (short) damage;
+            item.setDurability(durability);
             return;
         }
 
-        ItemMeta meta = item.getItemMeta();
-        if(meta instanceof Damageable) {
-            ((Damageable) meta).setDamage(durability);
-            item.setItemMeta(meta);
+        ItemMeta itemMeta = item.getItemMeta();
+        if(itemMeta instanceof Damageable) {
+            ((Damageable) itemMeta).setDamage(damage);
+            item.setItemMeta(itemMeta);
         }
     }
 }

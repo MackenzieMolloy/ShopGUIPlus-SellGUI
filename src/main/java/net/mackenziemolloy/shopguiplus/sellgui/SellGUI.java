@@ -20,8 +20,8 @@ import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.VersionUtility
 import org.bstats.bukkit.Metrics;
 
 public final class SellGUI extends JavaPlugin {
-    public CommentedConfiguration configuration;
-    public String version;
+    private CommentedConfiguration configuration;
+    private String version;
     
     public SellGUI() {
         this.configuration = new CommentedConfiguration();
@@ -44,6 +44,14 @@ public final class SellGUI extends JavaPlugin {
         logger.info("ShopGUIPlus SellGUI");
         logger.info("Made by Mackenzie Molloy");
         logger.info("*-*");
+    }
+    
+    public CommentedConfiguration getConfiguration() {
+        return this.configuration;
+    }
+    
+    public String getVersion() {
+        return this.version;
     }
     
     private void setupMetrics() {
