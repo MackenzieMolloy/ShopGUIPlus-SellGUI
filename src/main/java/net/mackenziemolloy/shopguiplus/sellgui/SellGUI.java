@@ -2,73 +2,102 @@ package net.mackenziemolloy.shopguiplus.sellgui;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import net.mackenziemolloy.shopguiplus.sellgui.command.CommandSellGUI;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.CommentedConfiguration;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.UpdateChecker;
+import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.VersionUtility;
 import org.bstats.bukkit.Metrics;
 
-public class SellGUI extends JavaPlugin {
-
-    public CommentedConfiguration configFile;
-    public static SellGUI sellGUI;
-    public String version = "";
+public final class SellGUI extends JavaPlugin {
+    private CommentedConfiguration configuration;
+    private String version;
+    
+    public SellGUI() {
+        this.configuration = new CommentedConfiguration();
+        this.version = null;
+    }
 
     @Override
     public void onEnable() {
-        sellGUI = this;
         new CommandSellGUI(this).register();
-
-        Logger logger = this.getLogger();
+        Logger logger = getLogger();
+        
+        this.version = VersionUtility.getNetMinecraftServerVersion();
+        logger.info("Your server is running version '" + this.version + "'.");
+        
+        generateFiles();
+        setupMetrics();
+        setupUpdates();
+        
         logger.info("*-*");
         logger.info("ShopGUIPlus SellGUI");
         logger.info("Made by Mackenzie Molloy");
         logger.info("*-*");
-
-        try {
-            version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
-        } catch (ArrayIndexOutOfBoundsException ignored) {
-        }
-        logger.info("Your server is running version " + version);
-
-        this.generateFiles();
-
+    }
+    
+    public CommentedConfiguration getConfiguration() {
+        return this.configuration;
+    }
+    
+    public String getVersion() {
+        return this.version;
+    }
+    
+    private void setupMetrics() {
         new Metrics(this, 9356);
-        new UpdateChecker(this, 85170).getVersion(version -> {
-            CommandSender console = getServer().getConsoleSender();
-            if(this.getDescription().getVersion().toLowerCase().contains("dev")) {
-                console.sendMessage(ChatColor.DARK_RED + "[ShopGUIPlus-SellGUI] You are running a DEVELOPMENT BUILD, this may contain bugs.");
+    }
+    
+    private void setupUpdates() {
+        PluginDescriptionFile description = getDescription();
+        String localVersion = description.getVersion();
+        String pluginPrefix = description.getPrefix();
+    
+        UpdateChecker updateChecker = new UpdateChecker(this, 85170);
+        updateChecker.getVersion(updateVersion -> {
+            CommandSender console = Bukkit.getConsoleSender();
+            if(localVersion.contains("dev")) {
+                String message = (ChatColor.DARK_RED + "[" + pluginPrefix + "] You are running a DEVELOPMENT " +
+                        "build. This may contain bugs.");
+                console.sendMessage(message);
+                return;
             }
-
-            else if(this.getDescription().getVersion().equalsIgnoreCase(version)) {
-                console.sendMessage(ChatColor.GREEN + "[ShopGUIPlus-SellGUI] You are running the LATEST release.");
+            
+            if(localVersion.equalsIgnoreCase(updateVersion)) {
+                String message = (ChatColor.GREEN + "[" + pluginPrefix + "] You are running the LATEST release.");
+                console.sendMessage(message);
+                return;
             }
-
-            else {
-                console.sendMessage(ChatColor.DARK_RED + "[ShopGUIPlus-SellGUI] There is a new update available, please update ASAP. Download: https://www.spigotmc.org/resources/85170/");
-            }
+            
+            String message = (ChatColor.DARK_RED + "[" + pluginPrefix + "] There is a new update available." +
+                    " Please update ASAP. Download: https://www.spigotmc.org/resources/85170/");
+            console.sendMessage(message);
         });
     }
 
     public void generateFiles() {
         saveDefaultConfig();
-
-        File file = new File(getDataFolder(), "config.yml");
-        configFile = CommentedConfiguration.loadConfiguration(file);
+        File pluginFolder = getDataFolder();
+        File configFile = new File(pluginFolder, "config.yml");
+        
         try {
-            configFile.syncWithConfig(file, getResource("config.yml"), "stupid_option"); //decorations
-        } catch (IOException ex) {
-            ex.printStackTrace();
+            this.configuration.load(configFile);
+    
+            InputStream jarConfig = getResource("config.yml");
+            this.configuration.syncWithConfig(configFile, jarConfig, "stupid_option");
+        } catch(IOException | InvalidConfigurationException ex) {
+            Logger logger = getLogger();
+            logger.log(Level.SEVERE, "Failed to load the 'config.yml' file due to an error:", ex);
         }
-    }
-
-    public static SellGUI getInstance() {
-        return sellGUI;
     }
 }

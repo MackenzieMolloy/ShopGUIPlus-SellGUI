@@ -1,20 +1,21 @@
 package net.mackenziemolloy.shopguiplus.sellgui.utility;
 
 import java.text.DecimalFormat;
+import java.util.Locale;
 
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import net.brcdev.shopgui.ShopGuiPlusApi;
 import net.brcdev.shopgui.economy.EconomyType;
 import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
 
 public class ShopHandler {
-
     public static EconomyType getEconomyType(ItemStack material, Player player) {
-
         EconomyType itemEconomyType = ShopGuiPlusApi.getItemStackShop(material).getEconomyType();
-        String defaultEconomyType = ShopGuiPlusApi.getPlugin().getEconomyManager().getDefaultEconomyProvider().getName().toUpperCase();
+        String defaultEconomyType = ShopGuiPlusApi.getPlugin().getEconomyManager().getDefaultEconomyProvider()
+                .getName().toUpperCase(Locale.US);
 
         if(itemEconomyType == null) {
             try {
@@ -38,24 +39,18 @@ public class ShopHandler {
     }
 
     public static String getFormattedPrice(Double priceToFormat, EconomyType economyType) {
-
-        SellGUI sellGUI = SellGUI.getInstance();
-
+        SellGUI plugin = JavaPlugin.getPlugin(SellGUI.class);
+        CommentedConfiguration configuration = plugin.getConfiguration();
         String priceToReturn = priceToFormat.toString();
 
-        if(sellGUI.configFile.getBoolean("options.rounded_pricing")) {
-
+        if(configuration.getBoolean("options.rounded_pricing")) {
             DecimalFormat formatToApplyRaw = new DecimalFormat("0.00");
             priceToReturn = formatToApplyRaw.format(priceToFormat);
-
         }
 
-        if(sellGUI.configFile.getBoolean("options.remove_trailing_zeros")) {
-
+        if(configuration.getBoolean("options.remove_trailing_zeros")) {
             if(Integer.valueOf(priceToReturn.split("\\.")[1]) == 0) {
-
                 priceToReturn = priceToReturn.split("\\.")[0];
-
             }
 
         }
@@ -65,17 +60,17 @@ public class ShopHandler {
     }
 
     public static String getFormattedNumber(Double numberToFormat) {
-
-        SellGUI sellGUI = SellGUI.getInstance();
+        SellGUI plugin = JavaPlugin.getPlugin(SellGUI.class);
+        CommentedConfiguration configuration = plugin.getConfiguration();
         String numberToReturn =  numberToFormat.toString();
 
-        if (sellGUI.configFile.getBoolean("options.rounded_pricing")) {
+        if (configuration.getBoolean("options.rounded_pricing")) {
 
             final DecimalFormat formatToApply = new DecimalFormat("#,##0.00");
             numberToReturn = formatToApply.format(numberToFormat);
         }
 
-        if(sellGUI.configFile.getBoolean("options.remove_trailing_zeros")) {
+        if(configuration.getBoolean("options.remove_trailing_zeros")) {
             if(Integer.valueOf(numberToReturn.split("\\.")[1]) == 0) {
                 numberToReturn = numberToReturn.split("\\.")[0];
             }
@@ -85,28 +80,3 @@ public class ShopHandler {
     }
 
 }
-
-        /*if(sellGUI.configFile.getBoolean("options.rounded_pricing")) {
-
-            DecimalFormat formatToApply = new DecimalFormat("#,##0.00");
-
-            if(raw) {
-                DecimalFormat formatToApplyRaw = new DecimalFormat("#.##");
-                return formatToApplyRaw.format(price);
-            }
-            else {
-                return formatToApply.format(price);
-            }
-
-        }
-
-        else {
-
-            if(raw) {
-                return String.valueOf(price);
-            }
-            else {
-                return String.format("%,f", new BigDecimal(price)).replaceAll("0*$", "").replaceAll("\\.$", "");
-            }
-
-        }*/
