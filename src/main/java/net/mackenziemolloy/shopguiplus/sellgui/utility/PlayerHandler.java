@@ -17,23 +17,25 @@ public class PlayerHandler {
         SellGUI plugin = JavaPlugin.getPlugin(SellGUI.class);
         String soundPath = String.format(Locale.US, "options.sounds.events.%s", event);
 
-        String soundValue = plugin.configFile.getString(soundPath);
+        String soundValue = plugin.configuration.getString(soundPath);
         return Sound.valueOf(soundValue);
     }
 
     public static void playSound(Player player, String event) {
-        SellGUI sellGUI = SellGUI.getInstance();
-        if(!sellGUI.configFile.getBoolean("options.sounds.enabled")) return;
+        SellGUI sellGUI = JavaPlugin.getPlugin(SellGUI.class);
+        if(!sellGUI.configuration.getBoolean("options.sounds.enabled")) return;
 
         float volume = 1.0F;
         float pitch = 1.0F;
 
-        if(sellGUI.configFile.isDouble("options.sounds.pitch") || sellGUI.configFile.isInt("options.sounds.pitch")) {
-            pitch = (float) sellGUI.configFile.getDouble("options.sounds.pitch");
+        if(sellGUI.configuration.isDouble("options.sounds.pitch")
+                || sellGUI.configuration.isInt("options.sounds.pitch")) {
+            pitch = (float) sellGUI.configuration.getDouble("options.sounds.pitch");
         }
 
-        if(sellGUI.configFile.isDouble("options.sounds.volume") || sellGUI.configFile.isInt("options.sounds.volume")) {
-            volume = (float) sellGUI.configFile.getDouble("options.sounds.volume");
+        if(sellGUI.configuration.isDouble("options.sounds.volume")
+                || sellGUI.configuration.isInt("options.sounds.volume")) {
+            volume = (float) sellGUI.configuration.getDouble("options.sounds.volume");
         }
 
         try {
@@ -41,11 +43,11 @@ public class PlayerHandler {
             Sound sound = getSound(event);
             player.playSound(location, sound, volume, pitch);
         } catch(Exception ex) {
-            if(sellGUI.configFile.getBoolean("options.sounds.error_notifcation")) {
+            if(sellGUI.configuration.getBoolean("options.sounds.error_notifcation")) {
                 CommandSender console = Bukkit.getConsoleSender();
                 console.sendMessage(ChatColor.DARK_RED + "[ShopGUIPlus-SellGUI] Invalid Sound for version "
-                        + sellGUI.version + " => '" + sellGUI.configFile.getString("options.sounds.events." + event)
-                        + "' (failed)");
+                        + sellGUI.version + " => '" + sellGUI.configuration.getString("options.sounds.events."
+                        + event) + "' (failed)");
             }
         }
     }

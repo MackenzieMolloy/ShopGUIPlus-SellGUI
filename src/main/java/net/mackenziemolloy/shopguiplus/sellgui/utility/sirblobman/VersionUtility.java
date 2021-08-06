@@ -4,6 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Server;
 
 public final class VersionUtility {
     /** Pattern that matches how most server jars format the current version */
@@ -16,6 +17,20 @@ public final class VersionUtility {
         String bukkitVersion = Bukkit.getVersion();
         Matcher matcher = VERSION_PATTERN.matcher(bukkitVersion);
         return (matcher.find() ? matcher.group(2) : "");
+    }
+    
+    /**
+     * @return The current NMS version of the server (Example: 1_16_R3)
+     */
+    public static String getNetMinecraftServerVersion() {
+        Server server = Bukkit.getServer();
+        Class<? extends Server> serverClass = server.getClass();
+        Package serverPackage = serverClass.getPackage();
+        String serverPackageName = serverPackage.getName();
+        
+        int lastPeriodIndex = serverPackageName.lastIndexOf('.');
+        int nextIndex = (lastPeriodIndex + 2);
+        return serverPackageName.substring(nextIndex);
     }
 
     /**
