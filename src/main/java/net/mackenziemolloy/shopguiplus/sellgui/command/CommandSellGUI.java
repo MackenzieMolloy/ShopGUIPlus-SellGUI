@@ -17,6 +17,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
+import net.brcdev.shopgui.event.ShopPostTransactionEvent;
+import net.brcdev.shopgui.shop.ShopItem;
+import net.brcdev.shopgui.shop.ShopManager.ShopAction;
+import net.brcdev.shopgui.shop.ShopTransactionResult;
+import net.brcdev.shopgui.shop.ShopTransactionResult.ShopTransactionResultType;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -264,6 +269,22 @@ public final class CommandSellGUI implements TabExecutor {
                     double amountSold2 = (totalSold2 + itemSellPrice);
                     moneyMap.put(itemEconomyType, amountSold2);
 
+                    //Item considered sold at this point
+                    //Requires reflection to instantiate constructors at runtime not contained in the api
+                    try {
+                        ShopTransactionResult shopTransactionResult =
+                            (ShopTransactionResult) Class.forName("net.brcdev.shopgui.shop.ShopTransactionResult")
+                            .getDeclaredConstructor(ShopAction.class, ShopTransactionResultType.class, ShopItem.class, Player.class, int.class, double.class)
+                            .newInstance(ShopAction.SELL, ShopTransactionResultType.SUCCESS, ShopGuiPlusApi.getItemStackShopItem(i), player, amount, itemSellPrice);
+
+                        ShopPostTransactionEvent shopPostTransactionEvent =
+                            (ShopPostTransactionEvent) Class.forName("net.brcdev.shopgui.event.ShopPostTransactionEvent")
+                            .getDeclaredConstructor(ShopTransactionResult.class).newInstance(shopTransactionResult);
+
+                        Bukkit.getPluginManager().callEvent(shopPostTransactionEvent);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
 
                 } else {
                     Map<Integer, ItemStack> fallenItems = event.getPlayer().getInventory().addItem(i);
