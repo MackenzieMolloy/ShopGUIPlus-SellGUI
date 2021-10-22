@@ -414,7 +414,7 @@ public final class CommandSellGUI implements TabExecutor {
             
                 totalPrice = totalPrice + itemSellPrice;
             
-                EconomyType itemEconomyType = ShopHandler.getEconomyType(i, (Player) event.getPlayer());
+                EconomyType itemEconomyType = ShopHandler.getEconomyType(i);
             
                 ItemStack SingleItemStack = new ItemStack(i);
                 SingleItemStack.setAmount(1);
@@ -441,8 +441,11 @@ public final class CommandSellGUI implements TabExecutor {
                     ShopPostTransactionEvent shopPostTransactionEvent =
                             (ShopPostTransactionEvent) Class.forName("net.brcdev.shopgui.event.ShopPostTransactionEvent")
                                     .getDeclaredConstructor(ShopTransactionResult.class).newInstance(shopTransactionResult);
-                
-                    Bukkit.getPluginManager().callEvent(shopPostTransactionEvent);
+                    
+                    Runnable task = () -> {
+                        Bukkit.getPluginManager().callEvent(shopPostTransactionEvent);
+                    };
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, task);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -495,10 +498,10 @@ public final class CommandSellGUI implements TabExecutor {
                         double profits = ShopHandler.getItemSellPrice(materialItemStack, player)
                                 * damageEntry.getValue();
                         String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager()
-                                .getEconomyProvider(ShopHandler.getEconomyType(materialItemStack, player))
+                                .getEconomyProvider(ShopHandler.getEconomyType(materialItemStack))
                                 .getCurrencyPrefix() + ShopHandler.getFormattedNumber(profits)
                                 + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(
-                                        ShopHandler.getEconomyType(materialItemStack, player))
+                                        ShopHandler.getEconomyType(materialItemStack))
                                 .getCurrencySuffix();
                     
                         String itemNameFormatted = WordUtils.capitalize(materialItemStack.getType()
@@ -525,7 +528,7 @@ public final class CommandSellGUI implements TabExecutor {
                                 .replace("{item}", finalItemNameFormatted)
                                 .replace("{price}", profitsFormatted));
                     
-                        receiptList.append(itemLine);
+                        receiptList.append(itemLine).append("\n");
                         itemList.append(itemNameFormatted).append(", ");
                     }
                 }
