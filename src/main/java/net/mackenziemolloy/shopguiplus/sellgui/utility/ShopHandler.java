@@ -8,25 +8,32 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import net.brcdev.shopgui.ShopGuiPlusApi;
+import net.brcdev.shopgui.economy.EconomyManager;
 import net.brcdev.shopgui.economy.EconomyType;
+import net.brcdev.shopgui.provider.economy.EconomyProvider;
 import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
+import org.jetbrains.annotations.NotNull;
 
 public class ShopHandler {
-    public static EconomyType getEconomyType(ItemStack material, Player player) {
-        EconomyType itemEconomyType = ShopGuiPlusApi.getItemStackShop(material).getEconomyType();
-        String defaultEconomyType = ShopGuiPlusApi.getPlugin().getEconomyManager().getDefaultEconomyProvider()
-                .getName().toUpperCase(Locale.US);
-
-        if(itemEconomyType == null) {
+    @NotNull
+    public static EconomyType getEconomyType(ItemStack material) {
+        EconomyType economyType = ShopGuiPlusApi.getItemStackShop(material).getEconomyType();
+        if(economyType != null) {
+            return economyType;
+        }
+    
+        EconomyManager economyManager = ShopGuiPlusApi.getPlugin().getEconomyManager();
+        EconomyProvider defaultEconomyProvider = economyManager.getDefaultEconomyProvider();
+        if(defaultEconomyProvider != null) {
+            String defaultEconomyTypeName = defaultEconomyProvider.getName().toUpperCase(Locale.US);
             try {
-                itemEconomyType = EconomyType.valueOf(defaultEconomyType);
+                return EconomyType.valueOf(defaultEconomyTypeName);
             } catch(IllegalArgumentException ex) {
-                player.sendMessage("§cOops... something went wrong when processing " +
-                        "the economy type. Please contact a server administrator.");
+                return EconomyType.CUSTOM;
             }
         }
-
-        return itemEconomyType;
+        
+        return EconomyType.CUSTOM;
     }
 
     public static Double getItemSellPrice(ItemStack material, Player player) {
