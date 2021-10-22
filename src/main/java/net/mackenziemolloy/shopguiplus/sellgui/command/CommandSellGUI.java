@@ -17,11 +17,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
-import net.brcdev.shopgui.event.ShopPostTransactionEvent;
-import net.brcdev.shopgui.shop.ShopItem;
-import net.brcdev.shopgui.shop.ShopManager.ShopAction;
-import net.brcdev.shopgui.shop.ShopTransactionResult;
-import net.brcdev.shopgui.shop.ShopTransactionResult.ShopTransactionResultType;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -34,12 +29,14 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
+import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.StringUtil;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -52,7 +49,12 @@ import dev.triumphteam.gui.guis.GuiItem;
 import net.brcdev.shopgui.ShopGuiPlugin;
 import net.brcdev.shopgui.ShopGuiPlusApi;
 import net.brcdev.shopgui.economy.EconomyType;
+import net.brcdev.shopgui.event.ShopPostTransactionEvent;
 import net.brcdev.shopgui.provider.economy.EconomyProvider;
+import net.brcdev.shopgui.shop.ShopItem;
+import net.brcdev.shopgui.shop.ShopManager.ShopAction;
+import net.brcdev.shopgui.shop.ShopTransactionResult;
+import net.brcdev.shopgui.shop.ShopTransactionResult.ShopTransactionResultType;
 import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.CommentedConfiguration;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.Hastebin;
@@ -207,10 +209,8 @@ public final class CommandSellGUI implements TabExecutor {
         if(!checkGameMode(player)) {
             return true;
         }
-    
-        int minorVersion = VersionUtility.getMinorVersion();
+        
         CommentedConfiguration configuration = this.plugin.getConfiguration();
-
         int guiSize = configuration.getInt("options.rows");
         if(guiSize > 6 || guiSize < 1) {
             guiSize = 6;
@@ -222,210 +222,9 @@ public final class CommandSellGUI implements TabExecutor {
 
         Set<Integer> ignoredSlotSet = new HashSet<>();
         setDecorationItems(configuration, gui, ignoredSlotSet);
-
         gui.setCloseGuiAction(event -> {
-            Map<ItemStack, Map<Short, Integer>> soldMap2 = new HashMap<>();
-            Map<EconomyType, Double> moneyMap = new EnumMap<>(EconomyType.class);
-
-            double totalPrice = 0;
-            int itemAmount = 0;
-            boolean[] excessItems = {false};
-            boolean itemsPlacedInGui = false;
-
-            Inventory inventory = event.getInventory();
-            for (int a = 0; a < inventory.getSize(); a++) {
-                ItemStack i = inventory.getItem(a);
-                if (i == null) continue;
-
-                if(ignoredSlotSet.contains(a)) {
-                    continue;
-                }
-
-                itemsPlacedInGui = true;
-                if (ShopHandler.getItemSellPrice(i, player) > 0) {
-                    itemAmount += i.getAmount();
-
-                    @Deprecated
-                    short materialDamage = i.getDurability();
-                    int amount = i.getAmount();
-
-                    double itemSellPrice = ShopHandler.getItemSellPrice(i, player);
-
-                    totalPrice = totalPrice + itemSellPrice;
-
-                    EconomyType itemEconomyType = ShopHandler.getEconomyType(i, (Player) event.getPlayer());
-
-                    ItemStack SingleItemStack = new ItemStack(i);
-                    SingleItemStack.setAmount(1);
-
-                    Map<Short, Integer> totalSold = soldMap2.getOrDefault(SingleItemStack, new HashMap<>());
-                    int totalSoldCount = totalSold.getOrDefault(materialDamage, 0);
-                    int amountSold = (totalSoldCount + amount);
-
-                    totalSold.put(materialDamage, amountSold);
-                    soldMap2.put(SingleItemStack, totalSold);
-
-                    double totalSold2 = moneyMap.getOrDefault(itemEconomyType, 0.0);
-                    double amountSold2 = (totalSold2 + itemSellPrice);
-                    moneyMap.put(itemEconomyType, amountSold2);
-
-                    //Item considered sold at this point
-                    //Requires reflection to instantiate constructors at runtime not contained in the api
-                    try {
-                        ShopTransactionResult shopTransactionResult =
-                            (ShopTransactionResult) Class.forName("net.brcdev.shopgui.shop.ShopTransactionResult")
-                            .getDeclaredConstructor(ShopAction.class, ShopTransactionResultType.class, ShopItem.class, Player.class, int.class, double.class)
-                            .newInstance(ShopAction.SELL, ShopTransactionResultType.SUCCESS, ShopGuiPlusApi.getItemStackShopItem(i), player, amount, itemSellPrice);
-
-                        ShopPostTransactionEvent shopPostTransactionEvent =
-                            (ShopPostTransactionEvent) Class.forName("net.brcdev.shopgui.event.ShopPostTransactionEvent")
-                            .getDeclaredConstructor(ShopTransactionResult.class).newInstance(shopTransactionResult);
-
-                        Bukkit.getPluginManager().callEvent(shopPostTransactionEvent);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-                } else {
-                    Map<Integer, ItemStack> fallenItems = event.getPlayer().getInventory().addItem(i);
-                    fallenItems.values().forEach(item -> {
-                        event.getPlayer().getWorld().dropItemNaturally(event.getPlayer().getLocation()
-                                .add(0, 0.5, 0), item);
-                        excessItems[0] = true;
-                    });
-
-                }
-
-            }
-
-            if(excessItems[0]) {
-                sendMessage(player, "inventory_full");
-            }
-
-            if (totalPrice > 0) {
-                PlayerHandler.playSound((Player) event.getPlayer(), "success");
-                StringBuilder formattedPricing = new StringBuilder();
-                for(Entry<EconomyType, Double> entry : moneyMap.entrySet()) {
-                    EconomyProvider economyProvider = ShopGuiPlusApi.getPlugin().getEconomyManager()
-                            .getEconomyProvider(entry.getKey());
-                    economyProvider.deposit(player, entry.getValue());
-                    formattedPricing.append(economyProvider.getCurrencyPrefix()).append(ShopHandler
-                            .getFormattedNumber(entry.getValue())).append(economyProvider.getCurrencySuffix())
-                            .append(", ");
-
-                }
-
-                if (formattedPricing.toString().endsWith(", ")) {
-                    formattedPricing = new StringBuilder(formattedPricing.substring(0,
-                            formattedPricing.length() - 2));
-                }
-
-                StringBuilder receiptList = new StringBuilder();
-                StringBuilder itemList = new StringBuilder();
-
-
-                if(configuration.getInt("options.receipt_type") == 1
-                        || configuration.getString("messages.items_sold").contains("{list}")) {
-                    for(Entry<ItemStack, Map<Short, Integer>> entry : soldMap2.entrySet()) {
-                        for(Entry<Short, Integer> damageEntry : entry.getValue().entrySet()) {
-                            @Deprecated
-                            ItemStack materialItemStack = entry.getKey();
-
-                            double profits = ShopHandler.getItemSellPrice(materialItemStack, player)
-                                    * damageEntry.getValue();
-                            String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager()
-                                    .getEconomyProvider(ShopHandler.getEconomyType(materialItemStack, player))
-                                    .getCurrencyPrefix() + ShopHandler.getFormattedNumber(profits)
-                                    + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(
-                                            ShopHandler.getEconomyType(materialItemStack, player))
-                                    .getCurrencySuffix();
-
-                            String itemNameFormatted = WordUtils.capitalize(materialItemStack.getType()
-                                    .name().replace("AETHER_LEGACY_", "")
-                                    .replace("LOST_AETHER_", "")
-                                    .replace("_", " ").toLowerCase());
-
-                            if(!(materialItemStack.getItemMeta().getDisplayName() == null)) {
-                                if (!materialItemStack.getItemMeta().getDisplayName().equals("")) {
-                                    itemNameFormatted = materialItemStack.getItemMeta().getDisplayName();
-                                }
-                            }
-
-                            if(minorVersion <= 12 && !configuration.getBoolean(
-                                    "options.show_item_damage")) itemNameFormatted += ":"
-                                    + damageEntry.getKey();
-    
-                            String finalItemNameFormatted = itemNameFormatted;
-                            String itemLine = getMessage("receipt_item_layout", message -> message
-                                    .replace("{amount}", String.valueOf(ShopHandler.getFormattedNumber(
-                                            (double)damageEntry.getValue())))
-                                    .replace("{item}", finalItemNameFormatted)
-                                    .replace("{price}", profitsFormatted));
-
-                            receiptList.append(itemLine);
-                            itemList.append(itemNameFormatted).append(", ");
-
-                        }
-                    }
-                }
-
-                String itemAmountFormatted = ShopHandler.getFormattedNumber((double) itemAmount);
-                if(configuration.getInt("options.receipt_type") == 1) {
-                    int finalItemAmount = itemAmount;
-                    StringBuilder finalFormattedPricing1 = formattedPricing;
-                    
-                    TextComponent itemsSoldComponent = getTextComponentMessage("items_sold", message -> message
-                            .replace("{earning}", finalFormattedPricing1)
-                            .replace("{receipt}", "")
-                            .replace("{list}", itemList.substring(0, itemList.length()-2))
-                            .replace("{amount}", String.valueOf(finalItemAmount)));
-                    itemsSoldComponent.addExtra(" ");
-                    
-                    String receiptHoverMessage = (getMessage("receipt_title", null) + receiptList);
-                    TextComponent receiptNameComponent = getTextComponentMessage("receipt_text", null);
-                    BaseComponent[] hoverEventComponents = TextComponent.fromLegacyText(receiptHoverMessage);
-                    
-                    HoverEvent hoverEvent = new HoverEvent(Action.SHOW_TEXT, hoverEventComponents);
-                    receiptNameComponent.setHoverEvent(hoverEvent);
-                    
-                    player.spigot().sendMessage(itemsSoldComponent, receiptNameComponent);
-
-                }
-
-                else {
-                    StringBuilder finalFormattedPricing = formattedPricing;
-                    sendMessage(player, "items_sold", message -> message.replace("{earning}",
-                                    finalFormattedPricing)
-                            .replace("{receipt}", "")
-                            .replace("{list}", itemList.substring(0, itemList.length()-2))
-                            .replace("{amount}", itemAmountFormatted));
-                }
-
-                if(configuration.getBoolean("options.sell_titles")) {
-                    StringBuilder finalFormattedPricing2 = formattedPricing;
-                    String sellTitle = getMessage("sell_title", message -> message
-                            .replace("{earning}", finalFormattedPricing2).
-                            replace("{amount}", itemAmountFormatted));
-                    String sellSubtitle = getMessage("sell_subtitle", message -> message
-                            .replace("{earning}", finalFormattedPricing2).
-                            replace("{amount}", itemAmountFormatted));
-                    player.sendTitle(sellTitle, sellSubtitle);
-                }
-
-                if(configuration.getBoolean("options.action_bar_msgs")) {
-                    if(minorVersion >= 8) {
-                        StringBuilder finalFormattedPricing3 = formattedPricing;
-                        TextComponent actionBarMessage = getTextComponentMessage("action_bar_items_sold",
-                                message -> message.replace("{earning}", finalFormattedPricing3)
-                                .replace("{amount}", itemAmountFormatted));
-                        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, actionBarMessage);
-                    }
-                }
-
-            } else {
-                PlayerHandler.playSound(player, "failed");
-                sendMessage(player, itemsPlacedInGui ? "no_items_sold" : "no_items_in_gui");
-            }
+            BukkitScheduler scheduler = Bukkit.getScheduler();
+            scheduler.runTaskAsynchronously(this.plugin, () -> onGuiClose(player, event, ignoredSlotSet));
         });
 
         gui.open(player);
@@ -580,5 +379,219 @@ public final class CommandSellGUI implements TabExecutor {
             ((Damageable) itemMeta).setDamage(damage);
             item.setItemMeta(itemMeta);
         }
+    }
+    
+    private void onGuiClose(Player player, InventoryCloseEvent event, Set<Integer> ignoredSlotSet) {
+        int minorVersion = VersionUtility.getMinorVersion();
+        CommentedConfiguration configuration = this.plugin.getConfiguration();
+        
+        Map<ItemStack, Map<Short, Integer>> soldMap2 = new HashMap<>();
+        Map<EconomyType, Double> moneyMap = new EnumMap<>(EconomyType.class);
+    
+        double totalPrice = 0;
+        int itemAmount = 0;
+        boolean[] excessItems = {false};
+        boolean itemsPlacedInGui = false;
+    
+        Inventory inventory = event.getInventory();
+        for (int a = 0; a < inventory.getSize(); a++) {
+            ItemStack i = inventory.getItem(a);
+            if (i == null) continue;
+        
+            if(ignoredSlotSet.contains(a)) {
+                continue;
+            }
+        
+            itemsPlacedInGui = true;
+            if (ShopHandler.getItemSellPrice(i, player) > 0) {
+                itemAmount += i.getAmount();
+            
+                @Deprecated
+                short materialDamage = i.getDurability();
+                int amount = i.getAmount();
+            
+                double itemSellPrice = ShopHandler.getItemSellPrice(i, player);
+            
+                totalPrice = totalPrice + itemSellPrice;
+            
+                EconomyType itemEconomyType = ShopHandler.getEconomyType(i, (Player) event.getPlayer());
+            
+                ItemStack SingleItemStack = new ItemStack(i);
+                SingleItemStack.setAmount(1);
+            
+                Map<Short, Integer> totalSold = soldMap2.getOrDefault(SingleItemStack, new HashMap<>());
+                int totalSoldCount = totalSold.getOrDefault(materialDamage, 0);
+                int amountSold = (totalSoldCount + amount);
+            
+                totalSold.put(materialDamage, amountSold);
+                soldMap2.put(SingleItemStack, totalSold);
+            
+                double totalSold2 = moneyMap.getOrDefault(itemEconomyType, 0.0);
+                double amountSold2 = (totalSold2 + itemSellPrice);
+                moneyMap.put(itemEconomyType, amountSold2);
+            
+                //Item considered sold at this point
+                //Requires reflection to instantiate constructors at runtime not contained in the api
+                try {
+                    ShopTransactionResult shopTransactionResult =
+                            (ShopTransactionResult) Class.forName("net.brcdev.shopgui.shop.ShopTransactionResult")
+                                    .getDeclaredConstructor(ShopAction.class, ShopTransactionResultType.class, ShopItem.class, Player.class, int.class, double.class)
+                                    .newInstance(ShopAction.SELL, ShopTransactionResultType.SUCCESS, ShopGuiPlusApi.getItemStackShopItem(i), player, amount, itemSellPrice);
+                
+                    ShopPostTransactionEvent shopPostTransactionEvent =
+                            (ShopPostTransactionEvent) Class.forName("net.brcdev.shopgui.event.ShopPostTransactionEvent")
+                                    .getDeclaredConstructor(ShopTransactionResult.class).newInstance(shopTransactionResult);
+                
+                    Bukkit.getPluginManager().callEvent(shopPostTransactionEvent);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            
+            } else {
+                Map<Integer, ItemStack> fallenItems = event.getPlayer().getInventory().addItem(i);
+                fallenItems.values().forEach(item -> {
+                    event.getPlayer().getWorld().dropItemNaturally(event.getPlayer().getLocation()
+                            .add(0, 0.5, 0), item);
+                    excessItems[0] = true;
+                });
+            
+            }
+        
+        }
+    
+        if(excessItems[0]) {
+            sendMessage(player, "inventory_full");
+        }
+    
+        if (totalPrice > 0) {
+            PlayerHandler.playSound((Player) event.getPlayer(), "success");
+            StringBuilder formattedPricing = new StringBuilder();
+            for(Entry<EconomyType, Double> entry : moneyMap.entrySet()) {
+                EconomyProvider economyProvider = ShopGuiPlusApi.getPlugin().getEconomyManager()
+                        .getEconomyProvider(entry.getKey());
+                economyProvider.deposit(player, entry.getValue());
+                formattedPricing.append(economyProvider.getCurrencyPrefix()).append(ShopHandler
+                                .getFormattedNumber(entry.getValue())).append(economyProvider.getCurrencySuffix())
+                        .append(", ");
+            
+            }
+        
+            if (formattedPricing.toString().endsWith(", ")) {
+                formattedPricing = new StringBuilder(formattedPricing.substring(0,
+                        formattedPricing.length() - 2));
+            }
+        
+            StringBuilder receiptList = new StringBuilder();
+            StringBuilder itemList = new StringBuilder();
+        
+        
+            if(configuration.getInt("options.receipt_type") == 1
+                    || configuration.getString("messages.items_sold").contains("{list}")) {
+                for(Entry<ItemStack, Map<Short, Integer>> entry : soldMap2.entrySet()) {
+                    for(Entry<Short, Integer> damageEntry : entry.getValue().entrySet()) {
+                        @Deprecated
+                        ItemStack materialItemStack = entry.getKey();
+                    
+                        double profits = ShopHandler.getItemSellPrice(materialItemStack, player)
+                                * damageEntry.getValue();
+                        String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager()
+                                .getEconomyProvider(ShopHandler.getEconomyType(materialItemStack, player))
+                                .getCurrencyPrefix() + ShopHandler.getFormattedNumber(profits)
+                                + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(
+                                        ShopHandler.getEconomyType(materialItemStack, player))
+                                .getCurrencySuffix();
+                    
+                        String itemNameFormatted = WordUtils.capitalize(materialItemStack.getType()
+                                .name().replace("AETHER_LEGACY_", "")
+                                .replace("LOST_AETHER_", "")
+                                .replace("_", " ").toLowerCase());
+    
+                        ItemMeta itemMeta = materialItemStack.getItemMeta();
+                        if(itemMeta != null && itemMeta.hasDisplayName()) {
+                            String displayName = itemMeta.getDisplayName();
+                            if(!displayName.isEmpty()) {
+                                itemNameFormatted = materialItemStack.getItemMeta().getDisplayName();
+                            }
+                        }
+    
+                        if(minorVersion <= 12 && !configuration.getBoolean("options.show_item_damage")) {
+                            itemNameFormatted += (":" + damageEntry.getKey());
+                        }
+                    
+                        String finalItemNameFormatted = itemNameFormatted;
+                        String itemLine = getMessage("receipt_item_layout", message -> message
+                                .replace("{amount}", String.valueOf(ShopHandler.getFormattedNumber(
+                                        (double)damageEntry.getValue())))
+                                .replace("{item}", finalItemNameFormatted)
+                                .replace("{price}", profitsFormatted));
+                    
+                        receiptList.append(itemLine);
+                        itemList.append(itemNameFormatted).append(", ");
+                    }
+                }
+            }
+        
+            String itemAmountFormatted = ShopHandler.getFormattedNumber((double) itemAmount);
+            if(configuration.getInt("options.receipt_type") == 1) {
+                int finalItemAmount = itemAmount;
+                StringBuilder finalFormattedPricing1 = formattedPricing;
+            
+                TextComponent itemsSoldComponent = getTextComponentMessage("items_sold", message -> message
+                        .replace("{earning}", finalFormattedPricing1)
+                        .replace("{receipt}", "")
+                        .replace("{list}", itemList.substring(0, itemList.length()-2))
+                        .replace("{amount}", String.valueOf(finalItemAmount)));
+                itemsSoldComponent.addExtra(" ");
+            
+                String receiptHoverMessage = (getMessage("receipt_title", null) + receiptList);
+                TextComponent receiptNameComponent = getTextComponentMessage("receipt_text", null);
+                BaseComponent[] hoverEventComponents = TextComponent.fromLegacyText(receiptHoverMessage);
+            
+                @SuppressWarnings("deprecation")
+                HoverEvent hoverEvent = new HoverEvent(Action.SHOW_TEXT, hoverEventComponents);
+                receiptNameComponent.setHoverEvent(hoverEvent);
+            
+                player.spigot().sendMessage(itemsSoldComponent, receiptNameComponent);
+            
+            }
+        
+            else {
+                StringBuilder finalFormattedPricing = formattedPricing;
+                sendMessage(player, "items_sold", message -> message.replace("{earning}",
+                                finalFormattedPricing)
+                        .replace("{receipt}", "")
+                        .replace("{list}", itemList.substring(0, itemList.length()-2))
+                        .replace("{amount}", itemAmountFormatted));
+            }
+        
+            if(configuration.getBoolean("options.sell_titles")) {
+                sendSellTitles(player, formattedPricing, itemAmountFormatted);
+            }
+            
+            if(configuration.getBoolean("options.action_bar_msgs") && minorVersion >= 8) {
+                sendActionBar(player, formattedPricing, itemAmountFormatted);
+            }
+        } else {
+            PlayerHandler.playSound(player, "failed");
+            sendMessage(player, itemsPlacedInGui ? "no_items_sold" : "no_items_in_gui");
+        }
+    }
+    
+    @SuppressWarnings("deprecation")
+    private void sendSellTitles(Player player, CharSequence price, String amount) {
+        Function<String, String> replacer = message -> message.replace("{earning}", price)
+                .replace("{amount}", amount);
+        
+        String title = getMessage("sell_title", replacer);
+        String subtitle = getMessage("sell_subtitle", replacer);
+        player.sendTitle(title, subtitle);
+    }
+    
+    private void sendActionBar(Player player, CharSequence price, String amount) {
+        Function<String, String> replacer = message -> message.replace("{earning}", price)
+                .replace("{amount}", amount);
+        
+        TextComponent message = getTextComponentMessage("action_bar_items_sold", replacer);
+        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, message);
     }
 }
