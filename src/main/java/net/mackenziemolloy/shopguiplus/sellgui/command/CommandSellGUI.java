@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -267,7 +268,7 @@ public final class CommandSellGUI implements TabExecutor {
                 }
             
                 ItemStack item = new ItemStack(material);
-                int damage = section.getInt("damage", 0);
+                int damage = section.getInt("item.damage", 0);
                 if(damage != 0) {
                     setItemDamage(item, damage);
                 }
@@ -483,8 +484,8 @@ public final class CommandSellGUI implements TabExecutor {
                 formattedPricing = new StringBuilder(formattedPricing.substring(0,
                         formattedPricing.length() - 2));
             }
-        
-            StringBuilder receiptList = new StringBuilder();
+
+            List<String> receiptList = new ArrayList<>();
             StringBuilder itemList = new StringBuilder();
         
         
@@ -523,12 +524,12 @@ public final class CommandSellGUI implements TabExecutor {
                     
                         String finalItemNameFormatted = itemNameFormatted;
                         String itemLine = getMessage("receipt_item_layout", message -> message
-                                .replace("{amount}", String.valueOf(ShopHandler.getFormattedNumber(
-                                        (double)damageEntry.getValue())))
+                                .replace("{amount}", String.valueOf(damageEntry.getValue()))
                                 .replace("{item}", finalItemNameFormatted)
                                 .replace("{price}", profitsFormatted));
-                    
-                        receiptList.append(itemLine).append("\n");
+
+                        receiptList.add(itemLine);
+                        //receiptList.append(itemLine);
                         itemList.append(itemNameFormatted).append(", ");
                     }
                 }
@@ -545,11 +546,12 @@ public final class CommandSellGUI implements TabExecutor {
                         .replace("{list}", itemList.substring(0, itemList.length()-2))
                         .replace("{amount}", String.valueOf(finalItemAmount)));
                 itemsSoldComponent.addExtra(" ");
-            
-                String receiptHoverMessage = (getMessage("receipt_title", null) + receiptList);
+
+                String receiptHoverMessage = (getMessage("receipt_title", null) + ChatColor.RESET + receiptList.stream().collect(Collectors.joining("\n")) + ChatColor.RESET);
+
                 TextComponent receiptNameComponent = getTextComponentMessage("receipt_text", null);
-                BaseComponent[] hoverEventComponents = TextComponent.fromLegacyText(receiptHoverMessage);
-            
+                BaseComponent[] hoverEventComponents = {new TextComponent(receiptHoverMessage)};
+
                 @SuppressWarnings("deprecation")
                 HoverEvent hoverEvent = new HoverEvent(Action.SHOW_TEXT, hoverEventComponents);
                 receiptNameComponent.setHoverEvent(hoverEvent);

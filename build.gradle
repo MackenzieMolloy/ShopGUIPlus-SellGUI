@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'net.mackenziemolloy.shopguiplus.sellgui'
-version '1.1.1'
+version '1.1.2'
 
 repositories {
 	mavenLocal()
@@ -20,9 +20,9 @@ repositories {
 
 dependencies {
     compileOnly "org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT"
-    compileOnly 'com.github.brcdev-minecraft:shopgui-api:2.1.1'
+    compileOnly 'com.github.brcdev-minecraft:shopgui-api:2.2.0'
     compileOnly 'org.jetbrains:annotations:22.0.0'
-    implementation "dev.triumphteam:triumph-gui:3.0.3"
+    implementation "dev.triumphteam:triumph-gui:3.0.5"
     implementation 'org.bstats:bstats-bukkit:2.2.1'
 
 }
