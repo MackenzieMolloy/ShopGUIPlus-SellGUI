@@ -56,7 +56,7 @@ public class ShopHandler {
         }
 
         if(configuration.getBoolean("options.remove_trailing_zeros")) {
-            if(Integer.valueOf(priceToReturn.split("\\.")[1]) == 0) {
+            if(Double.valueOf(priceToReturn.split("\\.")[1]) == 0) {
                 priceToReturn = priceToReturn.split("\\.")[0];
             }
 
@@ -78,8 +78,10 @@ public class ShopHandler {
         }
 
         if(configuration.getBoolean("options.remove_trailing_zeros")) {
-            if(Integer.valueOf(numberToReturn.split("\\.")[1]) == 0) {
-                numberToReturn = numberToReturn.split("\\.")[0];
+            if(numberToReturn.split("\\.")[1] != null) {
+                if (Double.valueOf(numberToReturn.split("\\.")[1]) == 0) {
+                    numberToReturn = numberToReturn.split("\\.")[0];
+                }
             }
         }
 
