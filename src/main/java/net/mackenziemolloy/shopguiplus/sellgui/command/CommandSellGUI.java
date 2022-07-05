@@ -18,6 +18,7 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -65,7 +66,6 @@ import net.mackenziemolloy.shopguiplus.sellgui.utility.PlayerHandler;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.ShopHandler;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.MessageUtility;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.VersionUtility;
-import org.apache.commons.lang.WordUtils;
 import org.jetbrains.annotations.Nullable;
 
 public final class CommandSellGUI implements TabExecutor {
@@ -227,7 +227,8 @@ public final class CommandSellGUI implements TabExecutor {
         setDecorationItems(configuration, gui, ignoredSlotSet);
         gui.setCloseGuiAction(event -> {
             BukkitScheduler scheduler = Bukkit.getScheduler();
-            scheduler.runTaskAsynchronously(this.plugin, () -> onGuiClose(player, event, ignoredSlotSet));
+            scheduler.runTask(this.plugin, () -> onGuiClose(player, event, ignoredSlotSet));
+            //onGuiClose(player, event, ignoredSlotSet);
         });
 
         gui.open(player);
