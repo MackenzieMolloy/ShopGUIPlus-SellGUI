@@ -21,7 +21,9 @@ import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
@@ -453,12 +455,15 @@ public final class CommandSellGUI implements TabExecutor {
             
             } else {
                 Map<Integer, ItemStack> fallenItems = event.getPlayer().getInventory().addItem(i);
-                fallenItems.values().forEach(item -> {
-                    event.getPlayer().getWorld().dropItemNaturally(event.getPlayer().getLocation()
-                            .add(0, 0.5, 0), item);
-                    excessItems[0] = true;
-                });
-            
+                Runnable task = () -> {
+                    World world = player.getWorld();
+                    Location location = player.getLocation().add(0.0D, 0.5D, 0.0D);
+                    fallenItems.values().forEach(item -> {
+                        world.dropItemNaturally(location, item);
+                        excessItems[0] = true;
+                    });
+                };
+                Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, task);
             }
         
         }
