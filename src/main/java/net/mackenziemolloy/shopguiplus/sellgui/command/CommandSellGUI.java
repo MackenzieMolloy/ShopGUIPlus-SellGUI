@@ -292,6 +292,11 @@ public final class CommandSellGUI implements TabExecutor {
                         loreList = MessageUtility.colorList(loreList);
                         itemMeta.setLore(loreList);
                     }
+
+                    int customModelData = section.getInt("item.customModelData");
+                    if(customModelData != 0) {
+                        itemMeta.setCustomModelData(customModelData);
+                    }
                 
                     item.setItemMeta(itemMeta);
                 }
@@ -317,6 +322,7 @@ public final class CommandSellGUI implements TabExecutor {
             
                 int slot = section.getInt("slot");
                 gui.setItem(slot, guiItem);
+
                 ignoredSlotSet.add(slot);
             }
         }
