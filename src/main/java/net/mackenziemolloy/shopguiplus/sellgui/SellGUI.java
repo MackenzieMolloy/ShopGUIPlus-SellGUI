@@ -3,6 +3,7 @@ package net.mackenziemolloy.shopguiplus.sellgui;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -10,7 +11,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import net.mackenziemolloy.shopguiplus.sellgui.command.CommandSellGUI;
@@ -22,17 +25,24 @@ import org.bstats.bukkit.Metrics;
 public final class SellGUI extends JavaPlugin {
     private CommentedConfiguration configuration;
     private String version;
+
+    public boolean compatible = false;
     
     public SellGUI() {
         this.configuration = new CommentedConfiguration();
         this.version = null;
     }
 
+
+
+
     @Override
     public void onEnable() {
         new CommandSellGUI(this).register();
         Logger logger = getLogger();
-        
+
+        checkCompatibility();
+
         this.version = VersionUtility.getNetMinecraftServerVersion();
         logger.info("Your server is running version '" + this.version + "'.");
         
@@ -44,8 +54,26 @@ public final class SellGUI extends JavaPlugin {
         logger.info("ShopGUIPlus SellGUI");
         logger.info("Made by Mackenzie Molloy");
         logger.info("*-*");
+
     }
-    
+
+    public void checkCompatibility() {
+        try {
+            Class.forName("net.brcdev.shopgui.shop.item.ShopItem");
+            compatible = true;
+        } catch(ReflectiveOperationException ex) {
+            compatible = false;
+        }
+
+    }
+
+    public String getSGPVersion() {
+        Plugin plugin = getServer().getPluginManager().getPlugin("ShopGUIPlus");
+        PluginDescriptionFile description = plugin.getDescription();
+        return description.getVersion();
+
+    }
+
     public CommentedConfiguration getConfiguration() {
         return this.configuration;
     }
