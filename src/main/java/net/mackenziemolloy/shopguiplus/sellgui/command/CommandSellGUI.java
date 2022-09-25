@@ -324,6 +324,8 @@ public final class CommandSellGUI implements TabExecutor {
                     for(String playerCommand : playerCommandList) {
                         Bukkit.dispatchCommand(human, playerCommand.replace("%PLAYER%", humanName));
                     }
+
+                    if(section.getBoolean("item.sellinventory")) { human.closeInventory(); commandBase(Bukkit.getPlayer(humanName)); }
                 });
             
                 int slot = section.getInt("slot");
