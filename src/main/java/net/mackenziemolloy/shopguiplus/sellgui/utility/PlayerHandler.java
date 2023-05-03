@@ -44,11 +44,11 @@ public class PlayerHandler {
             Sound sound = getSound(event);
             player.playSound(location, sound, volume, pitch);
         } catch(Exception ex) {
-            if(configuration.getBoolean("options.sounds.error_notifcation")) {
+            if(configuration.getBoolean("options.sounds.error_notification")) {
                 CommandSender console = Bukkit.getConsoleSender();
                 console.sendMessage(ChatColor.DARK_RED + "[ShopGUIPlus-SellGUI] Invalid Sound for version "
                         + plugin.getVersion() + " => '" + configuration.getString("options.sounds.events."
-                        + event) + "' (failed)");
+                        + event) + "' (failed) ");
             }
         }
     }

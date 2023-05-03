@@ -37,7 +37,7 @@ public class Hastebin {
         if (response.contains("key")) {
             response = response.substring(response.indexOf(":") + 2, response.length() - 2);
 
-            String postURL = raw ? "https://paste.helpch.at/" : "https://paste.helpch.at/";
+            String postURL = "https://paste.helpch.at/";
             response = postURL + response;
         }
 

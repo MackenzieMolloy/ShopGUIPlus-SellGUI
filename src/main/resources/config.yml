@@ -42,12 +42,12 @@ options:
 
   sounds:
     enabled: true
-    error_notifcation: true # Whether there should be a console output notifying you that a sound is invalid
+    error_notification: true # Whether there should be a console output notifying you that a sound is invalid
     pitch: 1
     volume: 1
     events:
       # If you don't want a certain event to have a sound, just set to an invalid value
-      # NOTE: THESE DEFAULT VALUES ARE FOR 1.13+
+      # NOTE: THESE DEFAULT VALUES ARE FOR 1.13+ AND MUST USE _ (underscore) INSTEAD OF . (dot)
       open: BLOCK_CHEST_OPEN
       success: ENTITY_VILLAGER_CELEBRATE
       failed: ENTITY_VILLAGER_HURT
