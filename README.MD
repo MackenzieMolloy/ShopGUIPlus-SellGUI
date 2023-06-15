@@ -9,7 +9,7 @@ Supports all currencies supported by ShopGUIPlus
 
 Supports all hooks (HeadDatabase, etc) supported by ShopGUIPlus
 
-Supports from 1.8, to 1.19
+Supports from 1.8, to 1.20
 
 Fully customisable messages
 
