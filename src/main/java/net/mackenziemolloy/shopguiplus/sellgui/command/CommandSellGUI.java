@@ -18,6 +18,7 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.HexColorUtility;
 import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -345,7 +346,7 @@ public final class CommandSellGUI implements TabExecutor {
             message = replacer.apply(message);
         }
     
-        return MessageUtility.color(message);
+        return HexColorUtility.replaceHexColors('&', MessageUtility.color(message));
     }
     
     private TextComponent getTextComponentMessage(String path, @Nullable Function<String, String> replacer) {
