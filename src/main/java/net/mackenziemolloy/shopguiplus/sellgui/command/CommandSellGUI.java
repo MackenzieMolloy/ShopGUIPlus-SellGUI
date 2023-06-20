@@ -18,6 +18,7 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import net.brcdev.shopgui.ShopGuiPlugin;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.HexColorUtility;
 import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Bukkit;
@@ -51,7 +52,6 @@ import net.md_5.bungee.api.chat.TextComponent;
 
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
-import net.brcdev.shopgui.ShopGuiPlugin;
 import net.brcdev.shopgui.ShopGuiPlusApi;
 import net.brcdev.shopgui.economy.EconomyType;
 import net.brcdev.shopgui.event.ShopPostTransactionEvent;
@@ -406,7 +406,7 @@ public final class CommandSellGUI implements TabExecutor {
         
         Map<ItemStack, Map<Short, Integer>> soldMap2 = new HashMap<>();
         Map<EconomyType, Double> moneyMap = new EnumMap<>(EconomyType.class);
-    
+
         double totalPrice = 0;
         int itemAmount = 0;
         boolean[] excessItems = {false};
@@ -460,7 +460,7 @@ public final class CommandSellGUI implements TabExecutor {
                     ShopPostTransactionEvent shopPostTransactionEvent =
                             (ShopPostTransactionEvent) Class.forName("net.brcdev.shopgui.event.ShopPostTransactionEvent")
                                     .getDeclaredConstructor(ShopTransactionResult.class).newInstance(shopTransactionResult);
-                    
+
                     Runnable task = () -> {
                         Bukkit.getPluginManager().callEvent(shopPostTransactionEvent);
                     };
@@ -550,7 +550,6 @@ public final class CommandSellGUI implements TabExecutor {
                                 .replace("{price}", profitsFormatted));
 
                         receiptList.add(itemLine);
-                        //receiptList.append(itemLine);
                         itemList.append(itemNameFormatted).append(", ");
                     }
                 }
@@ -589,7 +588,11 @@ public final class CommandSellGUI implements TabExecutor {
                         .replace("{list}", itemList.substring(0, itemList.length()-2))
                         .replace("{amount}", itemAmountFormatted));
             }
-        
+
+            /* Subject to deprecation */
+            plugin.fileLogger.info(player.getName() + " (" + player.getUniqueId() + ") sold: {" + HexColorUtility.purgeAllColor(receiptList.stream().collect(Collectors.joining(", "))) + "}");
+
+
             if(configuration.getBoolean("options.sell_titles")) {
                 sendSellTitles(player, formattedPricing, itemAmountFormatted);
             }

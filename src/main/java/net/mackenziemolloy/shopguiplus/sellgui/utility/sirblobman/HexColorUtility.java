@@ -81,4 +81,14 @@ public final class HexColorUtility {
 
         return assembled.toString();
     }
+
+    public static String purgeAllColor(String input) {
+        // Remove Minecraft color codes (e.g., &7)
+        String noMinecraftColorCodes = input.replaceAll("[&§][0-9a-fA-FkKlLnNoOrR]", "");
+
+        // Remove hex color codes (e.g., &#FFFF0)
+        String noHexColorCodes = noMinecraftColorCodes.replaceAll("[&§]#([0-9a-fA-F]){6}", "");
+
+        return noHexColorCodes;
+    }
 }

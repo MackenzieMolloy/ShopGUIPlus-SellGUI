@@ -23,6 +23,9 @@ options:
   receipt_type: 1
   sell_titles: true
 
+  # Date format of transactions logging (http://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html)
+  date_format: "yyyy/MM/dd HH:mm:ss"
+
   #
   # Whether prices should be rounded to 2 decimal places, or not.
   # This also formats prices with comma separation. IE: 1800 -> 1,800

@@ -3,17 +3,17 @@ package net.mackenziemolloy.shopguiplus.sellgui;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.function.Supplier;
+import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import net.mackenziemolloy.shopguiplus.sellgui.utility.FileUtils;
+import net.mackenziemolloy.shopguiplus.sellgui.utility.LogFormatter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import net.mackenziemolloy.shopguiplus.sellgui.command.CommandSellGUI;
@@ -24,6 +24,9 @@ import org.bstats.bukkit.Metrics;
 
 public final class SellGUI extends JavaPlugin {
     private CommentedConfiguration configuration;
+    private static SellGUI instance;
+    public Logger fileLogger;
+    private FileHandler handler;
     private String version;
 
     public boolean compatible = false;
@@ -38,6 +41,8 @@ public final class SellGUI extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        instance = this;
+
         new CommandSellGUI(this).register();
         Logger logger = getLogger();
 
@@ -49,12 +54,14 @@ public final class SellGUI extends JavaPlugin {
         generateFiles();
         setupMetrics();
         setupUpdates();
+
+        fileLogger = Logger.getLogger("SellGUIFileLogger");
+        initLogger();
         
         logger.info("*-*");
         logger.info("ShopGUIPlus SellGUI");
         logger.info("Made by Mackenzie Molloy");
         logger.info("*-*");
-
     }
 
     public void checkCompatibility() {
@@ -67,11 +74,21 @@ public final class SellGUI extends JavaPlugin {
 
     }
 
-    public String getSGPVersion() {
-        Plugin plugin = getServer().getPluginManager().getPlugin("ShopGUIPlus");
-        PluginDescriptionFile description = plugin.getDescription();
-        return description.getVersion();
+    public void initLogger() {
+        File log = FileUtils.loadFile("transaction.log");
+        FileHandler handler = null;
 
+        try {
+            handler = new FileHandler(log.getAbsolutePath(), true);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+
+        handler.setFormatter(new LogFormatter());
+        this.handler = handler;
+
+        fileLogger.addHandler(handler);
+        fileLogger.setUseParentHandlers(false);
     }
 
     public CommentedConfiguration getConfiguration() {
@@ -128,4 +145,9 @@ public final class SellGUI extends JavaPlugin {
             logger.log(Level.SEVERE, "Failed to load the 'config.yml' file due to an error:", ex);
         }
     }
+
+    public static SellGUI getInstance() {
+        return instance;
+    }
+
 }
