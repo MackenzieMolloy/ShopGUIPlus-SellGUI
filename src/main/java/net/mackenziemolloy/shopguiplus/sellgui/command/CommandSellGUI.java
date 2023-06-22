@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import net.brcdev.shopgui.ShopGuiPlugin;
+import net.mackenziemolloy.shopguiplus.sellgui.objects.ShopItemPriceValue;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.HexColorUtility;
 import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Bukkit;
@@ -403,7 +404,10 @@ public final class CommandSellGUI implements TabExecutor {
     private void onGuiClose(Player player, InventoryCloseEvent event, Set<Integer> ignoredSlotSet) {
         int minorVersion = VersionUtility.getMinorVersion();
         CommentedConfiguration configuration = this.plugin.getConfiguration();
-        
+
+        // ItemStack is a stack size of 0, Integer is Price
+        Map<ItemStack, ShopItemPriceValue> itemStackSellPriceCache = new HashMap<>();
+
         Map<ItemStack, Map<Short, Integer>> soldMap2 = new HashMap<>();
         Map<EconomyType, Double> moneyMap = new EnumMap<>(EconomyType.class);
 
@@ -415,21 +419,26 @@ public final class CommandSellGUI implements TabExecutor {
         Inventory inventory = event.getInventory();
         for (int a = 0; a < inventory.getSize(); a++) {
             ItemStack i = inventory.getItem(a);
+
             if (i == null) continue;
         
             if(ignoredSlotSet.contains(a)) {
                 continue;
             }
-        
+
+            ItemStack singleItem = new ItemStack(i);
+            singleItem.setAmount(1);
+
             itemsPlacedInGui = true;
-            if (ShopHandler.getItemSellPrice(i, player) > 0) {
+
+            if (itemStackSellPriceCache.getOrDefault(singleItem, new ShopItemPriceValue(null, 0.0)).getSellPrice() > 0 || ShopHandler.getItemSellPrice(i, player) > 0) {
                 itemAmount += i.getAmount();
             
                 @Deprecated
                 short materialDamage = i.getDurability();
                 int amount = i.getAmount();
             
-                double itemSellPrice = ShopHandler.getItemSellPrice(i, player);
+                double itemSellPrice = itemStackSellPriceCache.containsKey(singleItem) ? ( itemStackSellPriceCache.get(singleItem).getSellPrice() * amount ) : ShopHandler.getItemSellPrice(i, player);
             
                 totalPrice = totalPrice + itemSellPrice;
             
@@ -437,6 +446,8 @@ public final class CommandSellGUI implements TabExecutor {
             
                 ItemStack SingleItemStack = new ItemStack(i);
                 SingleItemStack.setAmount(1);
+
+                itemStackSellPriceCache.putIfAbsent(SingleItemStack, new ShopItemPriceValue(itemEconomyType, itemSellPrice/amount));
             
                 Map<Short, Integer> totalSold = soldMap2.getOrDefault(SingleItemStack, new HashMap<>());
                 int totalSoldCount = totalSold.getOrDefault(materialDamage, 0);
