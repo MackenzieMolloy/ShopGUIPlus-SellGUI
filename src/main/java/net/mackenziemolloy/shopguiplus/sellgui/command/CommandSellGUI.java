@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 import net.brcdev.shopgui.ShopGuiPlugin;
 import net.mackenziemolloy.shopguiplus.sellgui.objects.ShopItemPriceValue;
+import net.mackenziemolloy.shopguiplus.sellgui.utility.*;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.HexColorUtility;
 import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Bukkit;
@@ -62,10 +63,6 @@ import net.brcdev.shopgui.shop.ShopManager.ShopAction;
 import net.brcdev.shopgui.shop.ShopTransactionResult;
 import net.brcdev.shopgui.shop.ShopTransactionResult.ShopTransactionResultType;
 import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
-import net.mackenziemolloy.shopguiplus.sellgui.utility.CommentedConfiguration;
-import net.mackenziemolloy.shopguiplus.sellgui.utility.Hastebin;
-import net.mackenziemolloy.shopguiplus.sellgui.utility.PlayerHandler;
-import net.mackenziemolloy.shopguiplus.sellgui.utility.ShopHandler;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.MessageUtility;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.VersionUtility;
 import org.jetbrains.annotations.Nullable;
@@ -506,7 +503,7 @@ public final class CommandSellGUI implements TabExecutor {
                 EconomyProvider economyProvider = ShopGuiPlusApi.getPlugin().getEconomyManager()
                         .getEconomyProvider(entry.getKey());
                 economyProvider.deposit(player, entry.getValue());
-                formattedPricing.append(economyProvider.getCurrencyPrefix()).append(ShopHandler
+                formattedPricing.append(economyProvider.getCurrencyPrefix()).append(StringFormatter
                                 .getFormattedNumber(entry.getValue())).append(economyProvider.getCurrencySuffix())
                         .append(", ");
             
@@ -532,7 +529,7 @@ public final class CommandSellGUI implements TabExecutor {
                                 * damageEntry.getValue();
                         String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager()
                                 .getEconomyProvider(ShopHandler.getEconomyType(materialItemStack))
-                                .getCurrencyPrefix() + ShopHandler.getFormattedNumber(profits)
+                                .getCurrencyPrefix() + StringFormatter.getFormattedNumber(profits)
                                 + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(
                                         ShopHandler.getEconomyType(materialItemStack))
                                 .getCurrencySuffix();
@@ -566,7 +563,7 @@ public final class CommandSellGUI implements TabExecutor {
                 }
             }
         
-            String itemAmountFormatted = ShopHandler.getFormattedNumber((double) itemAmount);
+            String itemAmountFormatted = StringFormatter.getFormattedNumber((double) itemAmount);
             if(configuration.getInt("options.receipt_type") == 1) {
                 int finalItemAmount = itemAmount;
                 StringBuilder finalFormattedPricing1 = formattedPricing;

@@ -40,6 +40,13 @@ options:
   remove_trailing_zeros: false
 
   #
+  # Should units be abbreviated? eg: 1,259 -> 1.25k
+  # Requires "rounded_pricing" to be false
+  #
+
+  abbreviate_numbers: false
+
+  #
   # Sounds that are played during certain events
   #
 
