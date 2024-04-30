@@ -133,6 +133,10 @@ public final class CommandSellGUI implements TabExecutor {
                 return;
             }
 
+            // This looks painful, I know.
+            if (this.plugin.getConfiguration().get("options.transaction_log.enabled") != null && !this.plugin.getConfiguration().getBoolean("options.transaction_log.enabled")) this.plugin.closeLogger();
+            else if(this.plugin.fileLogger == null) this.plugin.initLogger();
+
             sendMessage(sender, "reloaded_config");
             if(sender instanceof Player) {
                 Player player = (Player) sender;
@@ -600,7 +604,7 @@ public final class CommandSellGUI implements TabExecutor {
             }
 
             /* Subject to deprecation */
-            plugin.fileLogger.info(player.getName() + " (" + player.getUniqueId() + ") sold: {" + HexColorUtility.purgeAllColor(receiptList.stream().collect(Collectors.joining(", "))) + "}");
+            if (plugin.fileLogger != null) plugin.fileLogger.info(player.getName() + " (" + player.getUniqueId() + ") sold: {" + HexColorUtility.purgeAllColor(receiptList.stream().collect(Collectors.joining(", "))) + "}");
 
 
             if(configuration.getBoolean("options.sell_titles")) {

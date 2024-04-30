@@ -6,7 +6,8 @@
 #    |____/|_____|_____|_____\____|\___/|___|
 #           ( By Mackenzie Molloy )
 
-# Support Discord | https://mackenziemolloy.net/discord
+#  Please contact me if you have any issues with the plugin - happy to help.
+#  - Support Discord | https://mackenziemolloy.net/discord
 
 #
 # Permissions:
@@ -23,8 +24,16 @@ options:
   receipt_type: 1
   sell_titles: true
 
-  # Date format of transactions logging (http://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html)
-  date_format: "yyyy/MM/dd HH:mm:ss"
+  #
+  # This is the feature where all sell transactions made via
+  # the SellGUI Sell Menu are logged to a file.
+  #
+
+  transaction_log:
+    # Should the Transaction logging feature be enabled?
+    enabled: true
+    # Date format of transactions logging (http://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html)
+    date_format: "yyyy/MM/dd HH:mm:ss"
 
   #
   # Whether prices should be rounded to 2 decimal places, or not.

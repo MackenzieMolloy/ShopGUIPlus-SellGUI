@@ -54,8 +54,6 @@ public final class SellGUI extends JavaPlugin {
         generateFiles();
         setupMetrics();
         setupUpdates();
-
-        fileLogger = Logger.getLogger("SellGUIFileLogger");
         initLogger();
         
         logger.info("*-*");
@@ -75,6 +73,9 @@ public final class SellGUI extends JavaPlugin {
     }
 
     public void initLogger() {
+        if (this.configuration.get("options.transaction_log.enabled") == null || !this.configuration.getBoolean("options.transaction_log.enabled")) return;
+
+        fileLogger = Logger.getLogger("SellGUIFileLogger");
         File log = FileUtils.loadFile("transaction.log");
         FileHandler handler = null;
 
@@ -89,6 +90,14 @@ public final class SellGUI extends JavaPlugin {
 
         fileLogger.addHandler(handler);
         fileLogger.setUseParentHandlers(false);
+    }
+
+    public void closeLogger() {
+        if (fileLogger == null) return;
+        if (fileLogger.getHandlers().length == 0) return;
+
+        fileLogger.getHandlers()[0].close();
+        fileLogger = null;
     }
 
     public CommentedConfiguration getConfiguration() {

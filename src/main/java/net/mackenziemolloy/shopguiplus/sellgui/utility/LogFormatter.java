@@ -10,7 +10,7 @@ import java.util.logging.LogRecord;
 
 public class LogFormatter extends Formatter {
 
-  private final DateFormat dateFormat = new SimpleDateFormat(SellGUI.getInstance().getConfiguration().getString("options.date_format"));
+  private final DateFormat dateFormat = new SimpleDateFormat(SellGUI.getInstance().getConfiguration().getString("options.transaction_log.date_format"));
 
   @Override
   public String format(LogRecord logRecord) {
