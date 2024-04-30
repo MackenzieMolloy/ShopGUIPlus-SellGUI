@@ -232,7 +232,9 @@ public final class CommandSellGUI implements TabExecutor {
         setDecorationItems(configuration, gui, ignoredSlotSet);
         gui.setCloseGuiAction(event -> {
             BukkitScheduler scheduler = Bukkit.getScheduler();
-            scheduler.runTask(this.plugin, () -> onGuiClose(player, event, ignoredSlotSet));
+            scheduler.runTaskAsynchronously(this.plugin, () -> {
+                if (!player.isDead()) onGuiClose(player, event, ignoredSlotSet);
+            });
             //onGuiClose(player, event, ignoredSlotSet);
         });
 
