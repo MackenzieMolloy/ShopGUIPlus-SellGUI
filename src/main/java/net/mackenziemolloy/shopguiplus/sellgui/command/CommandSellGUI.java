@@ -1,18 +1,8 @@
 package net.mackenziemolloy.shopguiplus.sellgui.command;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -520,8 +510,8 @@ public final class CommandSellGUI implements TabExecutor {
                         formattedPricing.length() - 2));
             }
 
-            List<String> receiptList = new ArrayList<>();
-            StringBuilder itemList = new StringBuilder();
+            List<String> receiptList = new LinkedList<>();
+            List<String> itemList = new LinkedList<>();
         
         
             if(configuration.getInt("options.receipt_type") == 1
@@ -564,7 +554,7 @@ public final class CommandSellGUI implements TabExecutor {
                                 .replace("{price}", profitsFormatted));
 
                         receiptList.add(itemLine);
-                        itemList.append(itemNameFormatted).append(", ");
+                        itemList.add(itemNameFormatted);
                     }
                 }
             }
@@ -577,7 +567,7 @@ public final class CommandSellGUI implements TabExecutor {
                 TextComponent itemsSoldComponent = getTextComponentMessage("items_sold", message -> message
                         .replace("{earning}", finalFormattedPricing1)
                         .replace("{receipt}", "")
-                        .replace("{list}", itemList.substring(0, itemList.length()-2))
+                        .replace("{list}", String.join(", ", itemList))
                         .replace("{amount}", String.valueOf(finalItemAmount)));
                 itemsSoldComponent.addExtra(" ");
 
@@ -599,7 +589,7 @@ public final class CommandSellGUI implements TabExecutor {
                 sendMessage(player, "items_sold", message -> message.replace("{earning}",
                                 finalFormattedPricing)
                         .replace("{receipt}", "")
-                        .replace("{list}", itemList.substring(0, itemList.length()-2))
+                        .replace("{list}", String.join(", ", itemList))
                         .replace("{amount}", itemAmountFormatted));
             }
 
