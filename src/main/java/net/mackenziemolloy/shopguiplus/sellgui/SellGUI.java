@@ -29,7 +29,7 @@ public final class SellGUI extends FoliaWrappedJavaPlugin {
     private String version;
 
     public boolean compatible = false;
-    
+
     public SellGUI() {
         this.configuration = new CommentedConfiguration();
         this.version = null;
@@ -46,7 +46,7 @@ public final class SellGUI extends FoliaWrappedJavaPlugin {
 
         this.version = VersionUtility.getNetMinecraftServerVersion();
         logger.info("Your server is running version '" + this.version + "'.");
-        
+
         generateFiles();
         setupMetrics();
         setupUpdates();
@@ -62,7 +62,7 @@ public final class SellGUI extends FoliaWrappedJavaPlugin {
         try {
             Class.forName("net.brcdev.shopgui.shop.item.ShopItem");
             compatible = true;
-        } catch(ReflectiveOperationException ex) {
+        } catch (ReflectiveOperationException ex) {
             compatible = false;
         }
     }
@@ -98,20 +98,20 @@ public final class SellGUI extends FoliaWrappedJavaPlugin {
     public CommentedConfiguration getConfiguration() {
         return this.configuration;
     }
-    
+
     public String getVersion() {
         return this.version;
     }
-    
+
     private void setupMetrics() {
         new Metrics(this, 9356);
     }
-    
+
     private void setupUpdates() {
         PluginDescriptionFile description = getDescription();
         String localVersion = description.getVersion();
         String pluginPrefix = description.getPrefix();
-    
+
         UpdateChecker updateChecker = new UpdateChecker(this, 85170);
         updateChecker.getVersion(updateVersion -> {
             CommandSender console = Bukkit.getConsoleSender();
@@ -121,13 +121,13 @@ public final class SellGUI extends FoliaWrappedJavaPlugin {
                 console.sendMessage(message);
                 return;
             }
-            
+
             if (localVersion.equalsIgnoreCase(updateVersion)) {
                 String message = (ChatColor.GREEN + "[" + pluginPrefix + "] You are running the LATEST release.");
                 console.sendMessage(message);
                 return;
             }
-            
+
             String message = (ChatColor.DARK_RED + "[" + pluginPrefix + "] There is a new update available." +
                     " Please update ASAP. Download: https://www.spigotmc.org/resources/85170/");
             console.sendMessage(message);
@@ -138,10 +138,10 @@ public final class SellGUI extends FoliaWrappedJavaPlugin {
         saveDefaultConfig();
         File pluginFolder = getDataFolder();
         File configFile = new File(pluginFolder, "config.yml");
-        
+
         try {
             this.configuration.load(configFile);
-    
+
             InputStream jarConfig = getResource("config.yml");
             this.configuration.syncWithConfig(configFile, jarConfig, "stupid_option");
         } catch (IOException | InvalidConfigurationException ex) {

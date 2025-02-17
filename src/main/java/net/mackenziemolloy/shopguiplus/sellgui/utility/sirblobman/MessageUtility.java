@@ -40,7 +40,6 @@ public final class MessageUtility {
         return colorMessageArray;
     }
 
-
     /**
      * @param messageList The iterable of messages that will be colored
      * @return A {@code List<String>} containing every message in the input iterable, but with color codes replaced.

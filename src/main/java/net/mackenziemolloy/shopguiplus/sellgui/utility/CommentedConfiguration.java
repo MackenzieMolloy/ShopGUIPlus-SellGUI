@@ -354,10 +354,8 @@ public final class CommentedConfiguration extends YamlConfiguration {
         // Checking if the new section is a child-section of the currentSection.
         if (!currentSection.isEmpty() && commentedConfig.contains(currentSection + "." + newSection)) {
             newSection = currentSection + "." + newSection;
-        }
-
         // Looking for the parent of the new section.
-        else {
+        } else {
             String parentSection = currentSection;
 
             /* Getting the parent of the new section. The loop will stop in one of the following situations:

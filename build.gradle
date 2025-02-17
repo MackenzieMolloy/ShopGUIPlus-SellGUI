@@ -34,7 +34,6 @@ dependencies {
 
 }
 
-
 shadowJar {
     relocate "dev.triumphteam.gui", "net.mackenziemolloy.shopguiplus.sellgui"
     relocate "org.bstats", "net.mackenziemolloy.shopguiplus.sellgui.bstats"
