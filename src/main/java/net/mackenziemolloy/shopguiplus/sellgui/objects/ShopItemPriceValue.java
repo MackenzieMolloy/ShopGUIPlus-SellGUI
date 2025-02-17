@@ -19,5 +19,4 @@ public class ShopItemPriceValue {
   public double getSellPrice() {
     return sellPrice;
   }
-
 }

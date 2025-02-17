@@ -1,8 +1,19 @@
 package net.mackenziemolloy.shopguiplus.sellgui.command;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -34,7 +45,6 @@ import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
-import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.StringUtil;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -55,18 +65,19 @@ import net.brcdev.shopgui.shop.ShopTransactionResult.ShopTransactionResultType;
 import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.MessageUtility;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.VersionUtility;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class CommandSellGUI implements TabExecutor {
     private final SellGUI plugin;
     
     public CommandSellGUI(SellGUI plugin) {
-        this.plugin = Objects.requireNonNull(plugin, "plugin must not be null!");
+        this.plugin = Objects.requireNonNull(plugin, "The plugin must not be null!");
     }
 
     @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
-        if(args.length == 1) {
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
+        if (args.length == 1) {
             List<String> valueSet = Arrays.asList("rl", "reload", "debug", "dump");
             return StringUtil.copyPartialMatches(args[0], valueSet, new ArrayList<>());
         }
@@ -75,28 +86,27 @@ public final class CommandSellGUI implements TabExecutor {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if(!plugin.compatible) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String @NotNull [] args) {
+        if (!plugin.compatible) {
             String message = MessageUtility.color("&7\n&7\n&a&lUPDATE REQUIRED \n&7\n&7Unfortunately &fSellGUI &7will not work until you update &cShopGUIPlus&7 to version &c1.78.0&7 or above.\n&7\n&eDownload: https://spigotmc.org/resources/6515/\n&7\n&7");
             sender.sendMessage(message);
             return false;
         }
 
-        if(args.length == 0) {
+        if (args.length == 0) {
             return commandBase(sender);
         }
 
         String sub = args[0].toLowerCase(Locale.US);
-        switch(sub) {
-            case "rl":
-            case "reload":
+        switch (sub) {
+            case "rl", "reload" -> {
                 return commandReload(sender);
-
-            case "debug":
-            case "dump":
+            }
+            case "debug", "dump" -> {
                 return commandDebug(sender);
-
-            default: break;
+            }
+            default -> {
+            }
         }
 
         return false;
@@ -104,20 +114,20 @@ public final class CommandSellGUI implements TabExecutor {
 
     public void register() {
         PluginCommand pluginCommand = this.plugin.getCommand("sellgui");
-        if(pluginCommand != null) {
+        if (pluginCommand != null) {
             pluginCommand.setExecutor(this);
             pluginCommand.setTabCompleter(this);
         }
     }
 
     private boolean commandReload(CommandSender sender) {
-        if(!sender.hasPermission("sellgui.reload")) {
+        if (!sender.hasPermission("sellgui.reload")) {
             sendMessage(sender, "no_permission");
             return true;
         }
 
         CompletableFuture.runAsync(this.plugin::generateFiles).whenComplete((success, error) -> {
-            if(error != null) {
+            if (error != null) {
                 sender.sendMessage(ChatColor.RED + "An error occurred, please check the server console.");
                 error.printStackTrace();
                 return;
@@ -125,10 +135,10 @@ public final class CommandSellGUI implements TabExecutor {
 
             // This looks painful, I know.
             if (this.plugin.getConfiguration().get("options.transaction_log.enabled") != null && !this.plugin.getConfiguration().getBoolean("options.transaction_log.enabled")) this.plugin.closeLogger();
-            else if(this.plugin.fileLogger == null) this.plugin.initLogger();
+            else if (this.plugin.fileLogger == null) this.plugin.initLogger();
 
             sendMessage(sender, "reloaded_config");
-            if(sender instanceof Player) {
+            if (sender instanceof Player) {
                 Player player = (Player) sender;
                 PlayerHandler.playSound(player, "success");
             }
@@ -137,14 +147,14 @@ public final class CommandSellGUI implements TabExecutor {
     }
 
     private boolean commandDebug(CommandSender sender) {
-        if(sender instanceof Player
+        if (sender instanceof Player
                 && ((Player) sender).getUniqueId().toString().equals("6b23291c-495b-478d-9055-d0d151206bff")) {
             String pluginVersion = this.plugin.getDescription().getVersion();
             sender.sendMessage(String.format(Locale.US, "This server is running SellGUI made by " +
                     "Mackenzie Molloy#1821 v%s", pluginVersion));
         }
 
-        if(!sender.hasPermission("sellgui.dump")) {
+        if (!sender.hasPermission("sellgui.dump")) {
             sendMessage(sender, "no_permission");
             return true;
         }
@@ -154,7 +164,7 @@ public final class CommandSellGUI implements TabExecutor {
         Plugin[] pluginArray = pluginManager.getPlugins();
         List<String> pluginInfoList = new ArrayList<>();
 
-        for(Plugin plugin : pluginArray) {
+        for (Plugin plugin : pluginArray) {
             String pluginName = plugin.getName();
             String pluginVersion = plugin.getDescription().getVersion();
             String pluginAuthorList = String.join(", ", plugin.getDescription().getAuthors());
@@ -183,11 +193,11 @@ public final class CommandSellGUI implements TabExecutor {
             Bukkit.getConsoleSender().sendMessage(message);
             sender.sendMessage(message);
 
-            if(sender instanceof Player) {
+            if (sender instanceof Player) {
                 Player player = (Player) sender;
                 PlayerHandler.playSound(player, "success");
             }
-        } catch(IOException ex) {
+        } catch (IOException ex) {
             sender.sendMessage(ChatColor.RED + "An error occurred, please check the console:");
             ex.printStackTrace();
 
@@ -197,24 +207,23 @@ public final class CommandSellGUI implements TabExecutor {
     }
 
     private boolean commandBase(CommandSender sender) {
-        if(!(sender instanceof Player)) {
+        if (!(sender instanceof Player player)) {
             sender.sendMessage(ChatColor.RED + "Only players can execute this command.");
             return true;
         }
 
-        Player player = (Player) sender;
-        if(!player.hasPermission("sellgui.use")) {
+        if (!player.hasPermission("sellgui.use")) {
             sendMessage(player, "no_permission");
             return true;
         }
         
-        if(!checkGameMode(player)) {
+        if (!checkGameMode(player)) {
             return true;
         }
         
         CommentedConfiguration configuration = this.plugin.getConfiguration();
         int guiSize = configuration.getInt("options.rows");
-        if(guiSize > 6 || guiSize < 1) {
+        if (guiSize > 6 || guiSize < 1) {
             guiSize = 6;
         }
         
@@ -224,13 +233,7 @@ public final class CommandSellGUI implements TabExecutor {
 
         Set<Integer> ignoredSlotSet = new HashSet<>();
         setDecorationItems(configuration, gui, ignoredSlotSet);
-        gui.setCloseGuiAction(event -> {
-            BukkitScheduler scheduler = Bukkit.getScheduler();
-            scheduler.runTaskAsynchronously(this.plugin, () -> {
-                if (!player.isDead()) onGuiClose(player, event, ignoredSlotSet);
-            });
-            //onGuiClose(player, event, ignoredSlotSet);
-        });
+        gui.setCloseGuiAction(event -> this.plugin.getScheduler().runTaskAtEntity(player, () -> onGuiClose(player, event, ignoredSlotSet)));
 
         gui.open(player);
         return true;
@@ -243,7 +246,7 @@ public final class CommandSellGUI implements TabExecutor {
     
         GameMode gameMode = player.getGameMode();
         String gameModeName = gameMode.name();
-        if(disabledGameModeList.contains(gameModeName)) {
+        if (disabledGameModeList.contains(gameModeName)) {
             String gameModeFormatted = WordUtils.capitalize(gameModeName);
             sendMessage(player, "gamemode_not_allowed", message ->
                     message.replace("{gamemode}", gameModeFormatted));
@@ -255,15 +258,15 @@ public final class CommandSellGUI implements TabExecutor {
     
     private void setDecorationItems(ConfigurationSection configuration, Gui gui, Set<Integer> ignoredSlotSet) {
         ConfigurationSection sectionDecorations = configuration.getConfigurationSection("options.decorations");
-        if(sectionDecorations != null) {
+        if (sectionDecorations != null) {
             Set<String> sectionDecorationsKeys = sectionDecorations.getKeys(false);
-            for(String key : sectionDecorationsKeys) {
+            for (String key : sectionDecorationsKeys) {
                 ConfigurationSection section = sectionDecorations.getConfigurationSection(key);
-                if(section == null) continue;
+                if (section == null) continue;
             
                 Material material;
                 String materialName = section.getString("item.material");
-                if(materialName == null || (material = Material.matchMaterial(materialName)) == null
+                if (materialName == null || (material = Material.matchMaterial(materialName)) == null
                         || !section.isInt("slot") || section.getInt("slot") > ((gui.getRows() * 9) - 1)
                         || section.getInt("slot") < 0) {
                     Logger logger = this.plugin.getLogger();
@@ -273,7 +276,7 @@ public final class CommandSellGUI implements TabExecutor {
             
                 ItemStack item = new ItemStack(material);
                 int damage = section.getInt("item.damage", 0);
-                if(damage != 0) {
+                if (damage != 0) {
                     setItemDamage(item, damage);
                 }
             
@@ -281,21 +284,21 @@ public final class CommandSellGUI implements TabExecutor {
                 item.setAmount(quantity);
             
                 ItemMeta itemMeta = item.getItemMeta();
-                if(itemMeta != null) {
+                if (itemMeta != null) {
                     String displayName = section.getString("item.name");
-                    if(displayName != null) {
+                    if (displayName != null) {
                         displayName = MessageUtility.color(displayName);
                         itemMeta.setDisplayName(displayName);
                     }
                 
                     List<String> loreList = section.getStringList("item.lore");
-                    if(!loreList.isEmpty()) {
+                    if (!loreList.isEmpty()) {
                         loreList = MessageUtility.colorList(loreList);
                         itemMeta.setLore(loreList);
                     }
 
                     int customModelData = section.getInt("item.customModelData");
-                    if(customModelData != 0) {
+                    if (customModelData != 0) {
                         itemMeta.setCustomModelData(customModelData);
                     }
                 
@@ -312,15 +315,15 @@ public final class CommandSellGUI implements TabExecutor {
                     String humanName = human.getName();
                 
                     CommandSender console = Bukkit.getConsoleSender();
-                    for(String consoleCommand : consoleCommandList) {
+                    for (String consoleCommand : consoleCommandList) {
                         Bukkit.dispatchCommand(console, consoleCommand.replace("%PLAYER%", humanName));
                     }
                 
-                    for(String playerCommand : playerCommandList) {
+                    for (String playerCommand : playerCommandList) {
                         Bukkit.dispatchCommand(human, playerCommand.replace("%PLAYER%", humanName));
                     }
 
-                    if(section.getBoolean("item.sellinventory")) { human.closeInventory(); commandBase(Bukkit.getPlayer(humanName)); }
+                    if (section.getBoolean("item.sellinventory")) { human.closeInventory(); commandBase(Bukkit.getPlayer(humanName)); }
                 });
             
                 int slot = section.getInt("slot");
@@ -334,9 +337,9 @@ public final class CommandSellGUI implements TabExecutor {
     private String getMessage(String path, @Nullable Function<String, String> replacer) {
         CommentedConfiguration configuration = this.plugin.getConfiguration();
         String message = configuration.getString("messages." + path);
-        if(message == null || message.isEmpty()) return "";
+        if (message == null || message.isEmpty()) return "";
     
-        if(replacer != null) {
+        if (replacer != null) {
             message = replacer.apply(message);
         }
     
@@ -345,7 +348,7 @@ public final class CommandSellGUI implements TabExecutor {
     
     private TextComponent getTextComponentMessage(String path, @Nullable Function<String, String> replacer) {
         String message = getMessage(path, replacer);
-        if(message.isEmpty()) return new TextComponent("");
+        if (message.isEmpty()) return new TextComponent("");
         else return new TextComponent(TextComponent.fromLegacyText(message));
     }
 
@@ -355,9 +358,9 @@ public final class CommandSellGUI implements TabExecutor {
     
     private void sendMessage(CommandSender sender, String path, @Nullable Function<String, String> replacer) {
         String message = getMessage(path, replacer);
-        if(message.isEmpty()) return;
+        if (message.isEmpty()) return;
         
-        if(sender instanceof Player) {
+        if (sender instanceof Player) {
             TextComponent textComponent = new TextComponent(TextComponent.fromLegacyText(message));
             ((Player) sender).spigot().sendMessage(textComponent);
         } else {
@@ -381,14 +384,14 @@ public final class CommandSellGUI implements TabExecutor {
     @SuppressWarnings("deprecation")
     private void setItemDamage(ItemStack item, int damage) {
         int minorVersion = VersionUtility.getMinorVersion();
-        if(minorVersion < 13) {
+        if (minorVersion < 13) {
             short durability = (short) damage;
             item.setDurability(durability);
             return;
         }
 
         ItemMeta itemMeta = item.getItemMeta();
-        if(itemMeta instanceof Damageable) {
+        if (itemMeta instanceof Damageable) {
             ((Damageable) itemMeta).setDamage(damage);
             item.setItemMeta(itemMeta);
         }
@@ -415,7 +418,7 @@ public final class CommandSellGUI implements TabExecutor {
 
             if (i == null) continue;
         
-            if(ignoredSlotSet.contains(a)) {
+            if (ignoredSlotSet.contains(a)) {
                 continue;
             }
 
@@ -453,8 +456,8 @@ public final class CommandSellGUI implements TabExecutor {
                 double amountSold2 = (totalSold2 + itemSellPrice);
                 moneyMap.put(itemEconomyType, amountSold2);
             
-                //Item considered sold at this point
-                //Requires reflection to instantiate constructors at runtime not contained in the api
+                // Item considered sold at this point
+                // Requires reflection to instantiate constructors at runtime not contained in the api
                 try {
                     ShopTransactionResult shopTransactionResult =
                             (ShopTransactionResult) Class.forName("net.brcdev.shopgui.shop.ShopTransactionResult")
@@ -465,37 +468,35 @@ public final class CommandSellGUI implements TabExecutor {
                             (ShopPostTransactionEvent) Class.forName("net.brcdev.shopgui.event.ShopPostTransactionEvent")
                                     .getDeclaredConstructor(ShopTransactionResult.class).newInstance(shopTransactionResult);
 
-                    Runnable task = () -> {
-                        Bukkit.getPluginManager().callEvent(shopPostTransactionEvent);
-                    };
-                    Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, task);
+                    Runnable task = () -> Bukkit.getPluginManager().callEvent(shopPostTransactionEvent);
+                    this.plugin.getScheduler().runTask(task);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             
             } else {
+                Location location = player.getLocation().add(0.0D, 0.5D, 0.0D);
                 Map<Integer, ItemStack> fallenItems = event.getPlayer().getInventory().addItem(i);
                 Runnable task = () -> {
                     World world = player.getWorld();
-                    Location location = player.getLocation().add(0.0D, 0.5D, 0.0D);
                     fallenItems.values().forEach(item -> {
                         world.dropItemNaturally(location, item);
                         excessItems[0] = true;
                     });
                 };
-                Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, task);
+                this.plugin.getScheduler().runTaskAtLocation(location, task);
             }
         
         }
     
-        if(excessItems[0]) {
+        if (excessItems[0]) {
             sendMessage(player, "inventory_full");
         }
     
         if (totalPrice > 0) {
             PlayerHandler.playSound((Player) event.getPlayer(), "success");
             StringBuilder formattedPricing = new StringBuilder();
-            for(Entry<EconomyType, Double> entry : moneyMap.entrySet()) {
+            for (Entry<EconomyType, Double> entry : moneyMap.entrySet()) {
                 EconomyProvider economyProvider = ShopGuiPlusApi.getPlugin().getEconomyManager()
                         .getEconomyProvider(entry.getKey());
                 economyProvider.deposit(player, entry.getValue());
@@ -514,10 +515,10 @@ public final class CommandSellGUI implements TabExecutor {
             List<String> itemList = new LinkedList<>();
         
         
-            if(configuration.getInt("options.receipt_type") == 1
+            if (configuration.getInt("options.receipt_type") == 1
                     || configuration.getString("messages.items_sold").contains("{list}")) {
-                for(Entry<ItemStack, Map<Short, Integer>> entry : soldMap2.entrySet()) {
-                    for(Entry<Short, Integer> damageEntry : entry.getValue().entrySet()) {
+                for (Entry<ItemStack, Map<Short, Integer>> entry : soldMap2.entrySet()) {
+                    for (Entry<Short, Integer> damageEntry : entry.getValue().entrySet()) {
                         @Deprecated
                         ItemStack materialItemStack = entry.getKey();
                     
@@ -536,14 +537,14 @@ public final class CommandSellGUI implements TabExecutor {
                                 .replace("_", " ").toLowerCase());
     
                         ItemMeta itemMeta = materialItemStack.getItemMeta();
-                        if(itemMeta != null && itemMeta.hasDisplayName()) {
+                        if (itemMeta != null && itemMeta.hasDisplayName()) {
                             String displayName = itemMeta.getDisplayName();
-                            if(!displayName.isEmpty()) {
+                            if (!displayName.isEmpty()) {
                                 itemNameFormatted = materialItemStack.getItemMeta().getDisplayName();
                             }
                         }
     
-                        if(minorVersion <= 12 && !configuration.getBoolean("options.show_item_damage")) {
+                        if (minorVersion <= 12 && !configuration.getBoolean("options.show_item_damage")) {
                             itemNameFormatted += (":" + damageEntry.getKey());
                         }
                     
@@ -560,7 +561,7 @@ public final class CommandSellGUI implements TabExecutor {
             }
         
             String itemAmountFormatted = StringFormatter.getFormattedNumber((double) itemAmount);
-            if(configuration.getInt("options.receipt_type") == 1) {
+            if (configuration.getInt("options.receipt_type") == 1) {
                 int finalItemAmount = itemAmount;
                 StringBuilder finalFormattedPricing1 = formattedPricing;
             
@@ -581,7 +582,6 @@ public final class CommandSellGUI implements TabExecutor {
                 receiptNameComponent.setHoverEvent(hoverEvent);
             
                 player.spigot().sendMessage(itemsSoldComponent, receiptNameComponent);
-            
             }
         
             else {
@@ -597,11 +597,11 @@ public final class CommandSellGUI implements TabExecutor {
             if (plugin.fileLogger != null) plugin.fileLogger.info(player.getName() + " (" + player.getUniqueId() + ") sold: {" + HexColorUtility.purgeAllColor(receiptList.stream().collect(Collectors.joining(", "))) + "}");
 
 
-            if(configuration.getBoolean("options.sell_titles")) {
+            if (configuration.getBoolean("options.sell_titles")) {
                 sendSellTitles(player, formattedPricing, itemAmountFormatted);
             }
             
-            if(configuration.getBoolean("options.action_bar_msgs") && minorVersion >= 8) {
+            if (configuration.getBoolean("options.action_bar_msgs") && minorVersion >= 8) {
                 sendActionBar(player, formattedPricing, itemAmountFormatted);
             }
         } else {

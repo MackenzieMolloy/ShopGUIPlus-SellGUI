@@ -93,9 +93,9 @@ public final class MessageUtility {
      *
      * @param string String to check
      * @param prefix Prefix of string to compare
-     * @return true if provided string starts with, ignoring case, the prefix
+     * @return true if provided string starts with, an ignoring case, the prefix
      * provided
-     * @throws NullPointerException     if prefix is null
+     * @throws NullPointerException     if the prefix is null
      * @throws IllegalArgumentException if string is null
      */
     public static boolean startsWithIgnoreCase(@NotNull String string, @NotNull String prefix) {
