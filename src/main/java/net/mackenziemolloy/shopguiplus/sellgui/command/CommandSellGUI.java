@@ -20,6 +20,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import net.brcdev.shopgui.ShopGuiPlugin;
+import net.brcdev.shopgui.event.ShopPreTransactionEvent;
 import net.mackenziemolloy.shopguiplus.sellgui.objects.ShopItemPriceValue;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.*;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.HexColorUtility;
@@ -434,8 +435,19 @@ public final class CommandSellGUI implements TabExecutor {
                 int amount = i.getAmount();
 
                 double itemSellPrice = itemStackSellPriceCache.containsKey(singleItem) ? ( itemStackSellPriceCache.get(singleItem).getSellPrice() * amount ) : ShopHandler.getItemSellPrice(i, player);
-            
-                totalPrice = totalPrice + itemSellPrice;
+
+                try {
+                    ShopPreTransactionEvent shopPreTransactionEvent = (ShopPreTransactionEvent) Class.forName("net.brcdev.shopgui.event.ShopPreTransactionEvent")
+                        .getDeclaredConstructor(ShopAction.class, ShopItem.class, Player.class, int.class, double.class)
+                        .newInstance(ShopAction.SELL, ShopGuiPlusApi.getItemStackShopItem(i), player, amount, itemSellPrice);
+
+                        Bukkit.getPluginManager().callEvent(shopPreTransactionEvent);
+                        itemSellPrice = shopPreTransactionEvent.getPrice();
+                } catch (Exception exception) {
+                    exception.printStackTrace();
+                }
+
+                totalPrice += itemSellPrice;
 
                 EconomyType itemEconomyType = ShopHandler.getEconomyType(i);
 
