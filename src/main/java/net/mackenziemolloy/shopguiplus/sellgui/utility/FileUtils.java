@@ -1,6 +1,10 @@
 package net.mackenziemolloy.shopguiplus.sellgui.utility;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
 
 public class FileUtils {
