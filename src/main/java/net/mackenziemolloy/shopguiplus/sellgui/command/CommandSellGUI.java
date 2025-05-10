@@ -330,40 +330,6 @@ public final class CommandSellGUI implements TabExecutor {
             }
         }
     }
-    
-    private String getMessage(String path, @Nullable Function<String, String> replacer) {
-        CommentedConfiguration configuration = this.plugin.getConfiguration();
-        String message = configuration.getString("messages." + path);
-        if(message == null || message.isEmpty()) return "";
-    
-        if(replacer != null) {
-            message = replacer.apply(message);
-        }
-    
-        return HexColorUtility.replaceHexColors('&', MessageUtility.color(message));
-    }
-    
-    private TextComponent getTextComponentMessage(String path, @Nullable Function<String, String> replacer) {
-        String message = getMessage(path, replacer);
-        if(message.isEmpty()) return new TextComponent("");
-        else return new TextComponent(TextComponent.fromLegacyText(message));
-    }
-
-    private void sendMessage(CommandSender sender, String path) {
-        sendMessage(sender, path, null);
-    }
-    
-    private void sendMessage(CommandSender sender, String path, @Nullable Function<String, String> replacer) {
-        String message = getMessage(path, replacer);
-        if(message.isEmpty()) return;
-        
-        if(sender instanceof Player) {
-            TextComponent textComponent = new TextComponent(TextComponent.fromLegacyText(message));
-            ((Player) sender).spigot().sendMessage(textComponent);
-        } else {
-            sender.sendMessage(message);
-        }
-    }
 
     private String getMemoryUsage() {
         Runtime runtime = Runtime.getRuntime();
@@ -609,7 +575,41 @@ public final class CommandSellGUI implements TabExecutor {
             sendMessage(player, itemsPlacedInGui ? "no_items_sold" : "no_items_in_gui");
         }
     }
-    
+
+    private String getMessage(String path, @Nullable Function<String, String> replacer) {
+        CommentedConfiguration configuration = this.plugin.getConfiguration();
+        String message = configuration.getString("messages." + path);
+        if(message == null || message.isEmpty()) return "";
+
+        if(replacer != null) {
+            message = replacer.apply(message);
+        }
+
+        return HexColorUtility.replaceHexColors('&', MessageUtility.color(message));
+    }
+
+    private TextComponent getTextComponentMessage(String path, @Nullable Function<String, String> replacer) {
+        String message = getMessage(path, replacer);
+        if(message.isEmpty()) return new TextComponent("");
+        else return new TextComponent(TextComponent.fromLegacyText(message));
+    }
+
+    private void sendMessage(CommandSender sender, String path) {
+        sendMessage(sender, path, null);
+    }
+
+    private void sendMessage(CommandSender sender, String path, @Nullable Function<String, String> replacer) {
+        String message = getMessage(path, replacer);
+        if(message.isEmpty()) return;
+
+        if(sender instanceof Player) {
+            TextComponent textComponent = new TextComponent(TextComponent.fromLegacyText(message));
+            ((Player) sender).spigot().sendMessage(textComponent);
+        } else {
+            sender.sendMessage(message);
+        }
+    }
+
     @SuppressWarnings("deprecation")
     private void sendSellTitles(Player player, CharSequence price, String amount) {
         Function<String, String> replacer = message -> message.replace("{earning}", price)
