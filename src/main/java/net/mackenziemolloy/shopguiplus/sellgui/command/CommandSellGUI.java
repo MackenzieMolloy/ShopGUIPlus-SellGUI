@@ -603,7 +603,7 @@ public final class CommandSellGUI implements TabExecutor {
         if(message.isEmpty()) return;
 
         if(sender instanceof Player) {
-            TextComponent textComponent = new TextComponent(TextComponent.fromLegacyText("'" + message + "'"));
+            TextComponent textComponent = new TextComponent(TextComponent.fromLegacyText(message));
             ((Player) sender).spigot().sendMessage(textComponent);
         } else {
             sender.sendMessage(message);
