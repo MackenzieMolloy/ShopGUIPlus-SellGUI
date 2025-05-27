@@ -69,6 +69,7 @@ import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.VersionUtility
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("deprecation")
 public final class CommandSellGUI implements TabExecutor {
     private final SellGUI plugin;
     
@@ -139,8 +140,7 @@ public final class CommandSellGUI implements TabExecutor {
             else if (this.plugin.fileLogger == null) this.plugin.initLogger();
 
             sendMessage(sender, "reloaded_config");
-            if (sender instanceof Player) {
-                Player player = (Player) sender;
+            if (sender instanceof Player player) {
                 PlayerHandler.playSound(player, "success");
             }
         });
@@ -194,14 +194,12 @@ public final class CommandSellGUI implements TabExecutor {
             Bukkit.getConsoleSender().sendMessage(message);
             sender.sendMessage(message);
 
-            if (sender instanceof Player) {
-                Player player = (Player) sender;
+            if (sender instanceof Player player) {
                 PlayerHandler.playSound(player, "success");
             }
         } catch (IOException ex) {
             sender.sendMessage(ChatColor.RED + "An error occurred, please check the console:");
             ex.printStackTrace();
-
         }
 
         return true;
@@ -316,14 +314,19 @@ public final class CommandSellGUI implements TabExecutor {
 
                     CommandSender console = Bukkit.getConsoleSender();
                     for (String consoleCommand : consoleCommandList) {
-                        Bukkit.dispatchCommand(console, consoleCommand.replace("%PLAYER%", humanName));
+                        String command = consoleCommand.replace("%PLAYER%", humanName);
+                        this.plugin.getScheduler().runTask(() -> Bukkit.dispatchCommand(console, command));
                     }
 
                     for (String playerCommand : playerCommandList) {
-                        Bukkit.dispatchCommand(human, playerCommand.replace("%PLAYER%", humanName));
+                        String command = playerCommand.replace("%PLAYER%", humanName);
+                        this.plugin.getScheduler().runTaskAtEntity(human, () -> Bukkit.dispatchCommand(human, command));
                     }
 
-                    if (section.getBoolean("item.sellinventory")) { human.closeInventory(); commandBase(Bukkit.getPlayer(humanName)); }
+                    if (section.getBoolean("item.sellinventory")) {
+                        human.closeInventory();
+                        commandBase(Bukkit.getPlayer(humanName));
+                    }
                 });
             
                 int slot = section.getInt("slot");
@@ -523,7 +526,7 @@ public final class CommandSellGUI implements TabExecutor {
             List<String> itemList = new LinkedList<>();
 
             if (configuration.getInt("options.receipt_type") == 1
-                    || configuration.getString("messages.items_sold").contains("{list}")) {
+                    || Objects.requireNonNull(configuration.getString("messages.items_sold")).contains("{list}")) {
                 for (Entry<ItemStack, Map<Short, Integer>> entry : soldMap2.entrySet()) {
                     for (Entry<Short, Integer> damageEntry : entry.getValue().entrySet()) {
                         @Deprecated
@@ -579,7 +582,7 @@ public final class CommandSellGUI implements TabExecutor {
                         .replace("{amount}", String.valueOf(finalItemAmount)));
                 itemsSoldComponent.addExtra(" ");
 
-                String receiptHoverMessage = (getMessage("receipt_title", null) + ChatColor.RESET + receiptList.stream().collect(Collectors.joining("\n")) + ChatColor.RESET);
+                String receiptHoverMessage = (getMessage("receipt_title", null) + ChatColor.RESET + String.join("\n", receiptList) + ChatColor.RESET);
 
                 TextComponent receiptNameComponent = getTextComponentMessage("receipt_text", null);
                 BaseComponent[] hoverEventComponents = {new TextComponent(receiptHoverMessage)};
@@ -599,7 +602,7 @@ public final class CommandSellGUI implements TabExecutor {
             }
 
             /* Subject to deprecation */
-            if (plugin.fileLogger != null) plugin.fileLogger.info(player.getName() + " (" + player.getUniqueId() + ") sold: {" + HexColorUtility.purgeAllColor(receiptList.stream().collect(Collectors.joining(", "))) + "}");
+            if (plugin.fileLogger != null) plugin.fileLogger.info(player.getName() + " (" + player.getUniqueId() + ") sold: {" + HexColorUtility.purgeAllColor(String.join(", ", receiptList)) + "}");
 
             if (configuration.getBoolean("options.sell_titles")) {
                 sendSellTitles(player, formattedPricing, itemAmountFormatted);
