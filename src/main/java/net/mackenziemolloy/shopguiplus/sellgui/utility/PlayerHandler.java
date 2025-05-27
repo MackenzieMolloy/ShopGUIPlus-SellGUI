@@ -25,7 +25,9 @@ public class PlayerHandler {
     public static void playSound(Player player, String event) {
         SellGUI plugin = JavaPlugin.getPlugin(SellGUI.class);
         CommentedConfiguration configuration = plugin.getConfiguration();
-        if (!configuration.getBoolean("options.sounds.enabled")) return;
+        if (!configuration.getBoolean("options.sounds.enabled")) {
+            return;
+        }
 
         float volume = 1.0F;
         float pitch = 1.0F;

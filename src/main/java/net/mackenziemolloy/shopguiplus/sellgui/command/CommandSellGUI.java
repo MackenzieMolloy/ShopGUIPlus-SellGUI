@@ -260,7 +260,9 @@ public final class CommandSellGUI implements TabExecutor {
             Set<String> sectionDecorationsKeys = sectionDecorations.getKeys(false);
             for (String key : sectionDecorationsKeys) {
                 ConfigurationSection section = sectionDecorations.getConfigurationSection(key);
-                if (section == null) continue;
+                if (section == null) {
+                    continue;
+                }
 
                 Material material;
                 String materialName = section.getString("item.material");
@@ -383,7 +385,9 @@ public final class CommandSellGUI implements TabExecutor {
         for (int a = 0; a < inventory.getSize(); a++) {
             ItemStack i = inventory.getItem(a);
 
-            if (i == null) continue;
+            if (i == null) {
+                continue;
+            }
 
             if (ignoredSlotSet.contains(a)) {
                 continue;

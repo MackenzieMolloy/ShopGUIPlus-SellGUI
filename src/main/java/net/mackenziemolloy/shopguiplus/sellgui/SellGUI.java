@@ -68,7 +68,9 @@ public final class SellGUI extends FoliaWrappedJavaPlugin {
     }
 
     public void initLogger() {
-        if (this.configuration.get("options.transaction_log.enabled") == null || !this.configuration.getBoolean("options.transaction_log.enabled")) return;
+        if (this.configuration.get("options.transaction_log.enabled") == null || !this.configuration.getBoolean("options.transaction_log.enabled")) {
+            return;
+        }
 
         fileLogger = Logger.getLogger("SellGUIFileLogger");
         File log = FileUtils.loadFile("transaction.log");
@@ -88,8 +90,13 @@ public final class SellGUI extends FoliaWrappedJavaPlugin {
     }
 
     public void closeLogger() {
-        if (fileLogger == null) return;
-        if (fileLogger.getHandlers().length == 0) return;
+        if (fileLogger == null) {
+            return;
+        }
+
+        if (fileLogger.getHandlers().length == 0) {
+            return;
+        }
 
         fileLogger.getHandlers()[0].close();
         fileLogger = null;

@@ -12,7 +12,10 @@ public class StringFormatter {
   public static ArrayList<String> quantityCodes = new ArrayList<>(Arrays.asList("K", "M", "B", "T", "Q", "Qa", "Sx", "Sp", "Oc", "No", "De", "Un", "Du", "Tr", "Qu", "Qi", "Se", "Sev", "Oc", "Nov", "Vg", "C"));
 
   public static String abbreviateQuantity(double count) {
-    if (count < 1000) return "" + count;
+    if (count < 1000) {
+      return "" + count;
+    }
+
     int exp = (int) (Math.log(count) / Math.log(1000));
 
     DecimalFormat format = new DecimalFormat("0.##");
