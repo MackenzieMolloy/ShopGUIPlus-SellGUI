@@ -591,7 +591,7 @@ public final class CommandSellGUI implements TabExecutor {
     private TextComponent getTextComponentMessage(String path, @Nullable Function<String, String> replacer) {
         String message = getMessage(path, replacer);
         if(message.isEmpty()) return new TextComponent("");
-        else return new TextComponent(TextComponent.fromLegacyText(message));
+        else return new TextComponent(message);
     }
 
     private void sendMessage(CommandSender sender, String path) {
