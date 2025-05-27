@@ -567,7 +567,7 @@ public final class CommandSellGUI implements TabExecutor {
                 sendSellTitles(player, formattedPricing, itemAmountFormatted);
             }
             
-            if(configuration.getBoolean("options.action_bar_msgs") && minorVersion >= 8) {
+            if(configuration.getBoolean("options.action_bar_msgs") && minorVersion >= 9) {
                 sendActionBar(player, formattedPricing, itemAmountFormatted);
             }
         } else {
