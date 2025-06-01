@@ -1,5 +1,7 @@
 package net.mackenziemolloy.shopguiplus.sellgui.utility;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -11,17 +13,7 @@ import javax.net.ssl.HttpsURLConnection;
 public class Hastebin {
     public String post(String text, boolean raw) throws IOException {
         byte[] postData = text.getBytes(StandardCharsets.UTF_8);
-        int postDataLength = postData.length;
-
-        String requestURL = "https://paste.helpch.at/documents";
-        URL url = new URL(requestURL);
-        HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-        conn.setDoOutput(true);
-        conn.setInstanceFollowRedirects(false);
-        conn.setRequestMethod("POST");
-        conn.setRequestProperty("User-Agent", "Hastebin Java Api");
-        conn.setRequestProperty("Content-Length", Integer.toString(postDataLength));
-        conn.setUseCaches(false);
+        HttpsURLConnection conn = getHttpsURLConnection(postData);
 
         String response = "e";
         DataOutputStream wr;
@@ -44,4 +36,18 @@ public class Hastebin {
         return response;
     }
 
+    private static @NotNull HttpsURLConnection getHttpsURLConnection(byte[] postData) throws IOException {
+        int postDataLength = postData.length;
+
+        String requestURL = "https://paste.helpch.at/documents";
+        URL url = new URL(requestURL);
+        HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+        conn.setDoOutput(true);
+        conn.setInstanceFollowRedirects(false);
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("User-Agent", "Hastebin Java API");
+        conn.setRequestProperty("Content-Length", Integer.toString(postDataLength));
+        conn.setUseCaches(false);
+        return conn;
+    }
 }

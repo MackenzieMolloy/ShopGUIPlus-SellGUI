@@ -41,7 +41,7 @@ public final class VersionUtility {
     }
 
     /**
-     * @return The current major.minor version of the server (Example: 1.16)
+     * @return The current major. Minor version of the server (Example: 1.16)
      */
     public static @NotNull String getMajorMinorVersion() {
         String minecraftVersion = getMinecraftVersion();
