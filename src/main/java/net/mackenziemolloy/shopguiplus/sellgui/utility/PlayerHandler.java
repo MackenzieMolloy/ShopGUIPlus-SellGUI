@@ -25,16 +25,18 @@ public class PlayerHandler {
     public static void playSound(Player player, String event) {
         SellGUI plugin = JavaPlugin.getPlugin(SellGUI.class);
         CommentedConfiguration configuration = plugin.getConfiguration();
-        if(!configuration.getBoolean("options.sounds.enabled")) return;
+        if (!configuration.getBoolean("options.sounds.enabled")) {
+            return;
+        }
 
         float volume = 1.0F;
         float pitch = 1.0F;
 
-        if(configuration.isDouble("options.sounds.pitch") || configuration.isInt("options.sounds.pitch")) {
+        if (configuration.isDouble("options.sounds.pitch") || configuration.isInt("options.sounds.pitch")) {
             pitch = (float) configuration.getDouble("options.sounds.pitch");
         }
 
-        if(configuration.isDouble("options.sounds.volume")
+        if (configuration.isDouble("options.sounds.volume")
                 || configuration.isInt("options.sounds.volume")) {
             volume = (float) configuration.getDouble("options.sounds.volume");
         }
@@ -43,8 +45,8 @@ public class PlayerHandler {
             Location location = player.getLocation();
             Sound sound = getSound(event);
             player.playSound(location, sound, volume, pitch);
-        } catch(Exception ex) {
-            if(configuration.getBoolean("options.sounds.error_notification")) {
+        } catch (Exception ex) {
+            if (configuration.getBoolean("options.sounds.error_notification")) {
                 CommandSender console = Bukkit.getConsoleSender();
                 console.sendMessage(ChatColor.DARK_RED + "[ShopGUIPlus-SellGUI] Invalid Sound for version "
                         + plugin.getVersion() + " => '" + configuration.getString("options.sounds.events."

@@ -28,37 +28,32 @@ options:
   # This is the feature where all sell transactions made via
   # the SellGUI Sell Menu are logged to a file.
   #
-
   transaction_log:
     # Should the Transaction logging feature be enabled?
     enabled: true
-    # Date format of transactions logging (http://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html)
+    # Date format of transaction logging (http://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html)
     date_format: "yyyy/MM/dd HH:mm:ss"
 
   #
   # Whether prices should be rounded to 2 decimal places, or not.
   # This also formats prices with comma separation. IE: 1800 -> 1,800
   #
-
   rounded_pricing: false
 
   #
   # Whether trailing zero decimals should be removed (28.0, 28.00, etc --> 28)
   #
-
   remove_trailing_zeros: false
 
   #
-  # Should units be abbreviated? eg: 1,259 -> 1.25k
+  # Should units be abbreviated? E.g.: 1,259 -> 1.25k
   # Requires "rounded_pricing" to be false
   #
-
   abbreviate_numbers: false
 
   #
   # Sounds that are played during certain events
   #
-
   sounds:
     enabled: true
     error_notification: true # Whether there should be a console output notifying you that a sound is invalid
@@ -79,7 +74,6 @@ options:
   #
   # Only relevent in versions prior to 1.13, basically do you want trialing ":(NUMBER)" on item lists (IE: "STONE:2")
   #
-
   show_item_damage: true
 
   #
@@ -106,11 +100,7 @@ options:
   #     - "say %PLAYER%"
   #   slot: 1
   #
-
   decorations: []
-
-
-
 
 messages:
   no_permission: "&cYou do not have permission"
@@ -121,19 +111,19 @@ messages:
   #
   # {list} - returns a list of sold items
   # {earning} - returns the total amount made
-  # {amount} - returns amount of items sold
+  # {amount} - return number of items sold
   #
   items_sold: "&aShop > &fYou sold &a{list}&f for &a{earning}&f."
   receipt_text: "&7(RECEIPT)"
   receipt_title: "&f&nReceipt for sell\n\n"
   #
-  # {amount} - returns amount of item
+  # {amount} - return number of item
   # {item} - returns item name
   # {price} - returns the selling price of the item
   #
   receipt_item_layout: "&a{amount} x {item} &ffor &a{price}"
   #
-  # {amount} - returns amount of items sold
+  # {amount} - return number of items sold
   # {earning} - returns the total amount made
   #
   sell_title: "&a&l+{earning}"
@@ -141,7 +131,7 @@ messages:
   gamemode_not_allowed: "&aShop > &fYou are not allowed to use the Sell GUI in &a{gamemode} mode&f."
   inventory_full: "&aShop > &fYour inventory is currently full, so excess items have been dropped on the ground."
   #
-  # {amount} - returns amount of items sold
+  # {amount} - return number of items sold
   # {earning} - returns the total amount made
   #
   action_bar_items_sold: "&aShop > &fYou sold &a{amount} &fitems in this batch."

@@ -1,8 +1,6 @@
 package net.mackenziemolloy.shopguiplus.sellgui.utility;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Locale;
 
 import org.bukkit.entity.Player;
@@ -20,21 +18,21 @@ public class ShopHandler {
     @NotNull
     public static EconomyType getEconomyType(ItemStack material) {
         EconomyType economyType = ShopGuiPlusApi.getItemStackShop(material).getEconomyType();
-        if(economyType != null) {
+        if (economyType != null) {
             return economyType;
         }
-    
+
         EconomyManager economyManager = ShopGuiPlusApi.getPlugin().getEconomyManager();
         EconomyProvider defaultEconomyProvider = economyManager.getDefaultEconomyProvider();
-        if(defaultEconomyProvider != null) {
+        if (defaultEconomyProvider != null) {
             String defaultEconomyTypeName = defaultEconomyProvider.getName().toUpperCase(Locale.US);
             try {
                 return EconomyType.valueOf(defaultEconomyTypeName);
-            } catch(IllegalArgumentException ex) {
+            } catch (IllegalArgumentException ex) {
                 return EconomyType.CUSTOM;
             }
         }
-        
+
         return EconomyType.CUSTOM;
     }
 
@@ -47,13 +45,13 @@ public class ShopHandler {
         CommentedConfiguration configuration = plugin.getConfiguration();
         String priceToReturn = priceToFormat.toString();
 
-        if(configuration.getBoolean("options.rounded_pricing")) {
+        if (configuration.getBoolean("options.rounded_pricing")) {
             DecimalFormat formatToApplyRaw = new DecimalFormat("0.00");
             priceToReturn = formatToApplyRaw.format(priceToFormat);
         }
 
-        if(configuration.getBoolean("options.remove_trailing_zeros")) {
-            if(Double.valueOf(priceToReturn.split("\\.")[1]) == 0) {
+        if (configuration.getBoolean("options.remove_trailing_zeros")) {
+            if (Double.valueOf(priceToReturn.split("\\.")[1]) == 0) {
                 priceToReturn = priceToReturn.split("\\.")[0];
             }
 
@@ -61,5 +59,4 @@ public class ShopHandler {
 
         return priceToReturn;
     }
-
 }
