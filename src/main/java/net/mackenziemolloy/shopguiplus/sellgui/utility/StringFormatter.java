@@ -11,6 +11,10 @@ public class StringFormatter {
 
   public static ArrayList<String> quantityCodes = new ArrayList<>(Arrays.asList("K", "M", "B", "T", "Q", "Qa", "Sx", "Sp", "Oc", "No", "De", "Un", "Du", "Tr", "Qu", "Qi", "Se", "Sev", "Oc", "Nov", "Vg", "C"));
 
+  public static String capitalize(String string) {
+    return string.substring(0, 1).toUpperCase() + string.substring(1);
+  }
+
   public static String abbreviateQuantity(double count) {
     if (count < 1000) {
       return "" + count;

@@ -30,7 +30,6 @@ dependencies {
     compileOnly "org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT"
     compileOnly 'com.github.brcdev-minecraft:shopgui-api:3.0.0'
     compileOnly 'org.jetbrains:annotations:26.0.2'
-    implementation 'org.apache.commons:commons-lang3:3.17.0'
     implementation "dev.triumphteam:triumph-gui:3.1.11"
     implementation 'org.bstats:bstats-bukkit:3.1.0'
     implementation 'com.github.NahuLD.folia-scheduler-wrapper:folia-scheduler-wrapper:v0.0.3'

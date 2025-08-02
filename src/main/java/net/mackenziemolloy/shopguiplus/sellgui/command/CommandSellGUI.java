@@ -23,7 +23,6 @@ import net.brcdev.shopgui.event.ShopPreTransactionEvent;
 import net.mackenziemolloy.shopguiplus.sellgui.objects.ShopItemPriceValue;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.*;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.HexColorUtility;
-import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -245,7 +244,7 @@ public final class CommandSellGUI implements TabExecutor {
         GameMode gameMode = player.getGameMode();
         String gameModeName = gameMode.name();
         if (disabledGameModeList.contains(gameModeName)) {
-            String gameModeFormatted = WordUtils.capitalize(gameModeName);
+            String gameModeFormatted = StringFormatter.capitalize(gameModeName);
             sendMessage(player, "gamemode_not_allowed", message ->
                     message.replace("{gamemode}", gameModeFormatted));
             return false;
@@ -509,7 +508,7 @@ public final class CommandSellGUI implements TabExecutor {
                                         ShopHandler.getEconomyType(materialItemStack))
                                 .getCurrencySuffix();
                     
-                        String itemNameFormatted = WordUtils.capitalize(materialItemStack.getType()
+                        String itemNameFormatted = StringFormatter.capitalize(materialItemStack.getType()
                                 .name().replace("AETHER_LEGACY_", "")
                                 .replace("LOST_AETHER_", "")
                                 .replace("_", " ").toLowerCase());
