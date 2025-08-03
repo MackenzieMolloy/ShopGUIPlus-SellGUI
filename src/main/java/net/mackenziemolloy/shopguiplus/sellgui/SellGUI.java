@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.FileHandler;
+import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -68,25 +69,23 @@ public final class SellGUI extends FoliaWrappedJavaPlugin {
     }
 
     public void initLogger() {
-        if (this.configuration.get("options.transaction_log.enabled") == null || !this.configuration.getBoolean("options.transaction_log.enabled")) {
+        if (!configuration.getBoolean("options.transaction_log.enabled", false)) {
             return;
         }
 
-        fileLogger = Logger.getLogger("SellGUIFileLogger");
-        File log = FileUtils.loadFile("transaction.log");
-        FileHandler handler = null;
-
         try {
-            handler = new FileHandler(log.getAbsolutePath(), true);
-        } catch (IOException ex) {
-            ex.printStackTrace();
+            File logFile = FileUtils.loadFile("transaction.log");
+            FileHandler handler = new FileHandler(logFile.getAbsolutePath(), true);
+            handler.setFormatter(new LogFormatter());
+            this.handler = handler;
+
+            Logger logger = Logger.getLogger("SellGUIFileLogger");
+            logger.setUseParentHandlers(false);
+            logger.addHandler(handler);
+            this.fileLogger = logger;
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
-        handler.setFormatter(new LogFormatter());
-        this.handler = handler;
-
-        fileLogger.addHandler(handler);
-        fileLogger.setUseParentHandlers(false);
     }
 
     public void closeLogger() {
@@ -94,11 +93,11 @@ public final class SellGUI extends FoliaWrappedJavaPlugin {
             return;
         }
 
-        if (fileLogger.getHandlers().length == 0) {
-            return;
+        for (Handler handler : fileLogger.getHandlers()) {
+            handler.close();
+            fileLogger.removeHandler(handler);
         }
 
-        fileLogger.getHandlers()[0].close();
         fileLogger = null;
     }
 

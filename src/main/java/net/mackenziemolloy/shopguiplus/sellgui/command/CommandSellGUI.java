@@ -133,8 +133,7 @@ public final class CommandSellGUI implements TabExecutor {
                 return;
             }
 
-            // This looks painful, I know.
-            if (this.plugin.getConfiguration().get("options.transaction_log.enabled") != null && !this.plugin.getConfiguration().getBoolean("options.transaction_log.enabled")) this.plugin.closeLogger();
+            if (!this.plugin.getConfiguration().getBoolean("options.transaction_log.enabled", false)) this.plugin.closeLogger();
             else if (this.plugin.fileLogger == null) this.plugin.initLogger();
 
             sendMessage(sender, "reloaded_config");
@@ -146,13 +145,6 @@ public final class CommandSellGUI implements TabExecutor {
     }
 
     private boolean commandDebug(CommandSender sender) {
-        if (sender instanceof Player
-                && ((Player) sender).getUniqueId().toString().equals("6b23291c-495b-478d-9055-d0d151206bff")) {
-            String pluginVersion = this.plugin.getDescription().getVersion();
-            sender.sendMessage(String.format(Locale.US, "This server is running SellGUI made by " +
-                    "Mackenzie Molloy#1821 v%s", pluginVersion));
-        }
-
         if (!sender.hasPermission("sellgui.dump")) {
             sendMessage(sender, "no_permission");
             return true;
@@ -190,7 +182,7 @@ public final class CommandSellGUI implements TabExecutor {
 
             String message = String.format(Locale.US, pastedDumpMsg, pasteUrl);
             Bukkit.getConsoleSender().sendMessage(message);
-            sender.sendMessage(message);
+            if (sender instanceof Player) sender.sendMessage(message);
 
             if (sender instanceof Player player) {
                 PlayerHandler.playSound(player, "success");
@@ -219,7 +211,7 @@ public final class CommandSellGUI implements TabExecutor {
         }
 
         CommentedConfiguration configuration = this.plugin.getConfiguration();
-        int guiSize = configuration.getInt("options.rows");
+        int guiSize = configuration.getInt("options.rows", 6);
         if (guiSize > 6 || guiSize < 1) {
             guiSize = 6;
         }
@@ -255,85 +247,82 @@ public final class CommandSellGUI implements TabExecutor {
 
     private void setDecorationItems(ConfigurationSection configuration, Gui gui, Set<Integer> ignoredSlotSet) {
         ConfigurationSection sectionDecorations = configuration.getConfigurationSection("options.decorations");
-        if (sectionDecorations != null) {
-            Set<String> sectionDecorationsKeys = sectionDecorations.getKeys(false);
-            for (String key : sectionDecorationsKeys) {
-                ConfigurationSection section = sectionDecorations.getConfigurationSection(key);
-                if (section == null) {
-                    continue;
-                }
+        if (sectionDecorations == null) {
+            return;
+        }
 
-                Material material;
-                String materialName = section.getString("item.material");
-                if (materialName == null || (material = Material.matchMaterial(materialName)) == null
-                        || !section.isInt("slot") || section.getInt("slot") > ((gui.getRows() * 9) - 1)
-                        || section.getInt("slot") < 0) {
-                    Logger logger = this.plugin.getLogger();
-                    logger.warning("Failed to load decoration item with id '" + key + "'.");
-                    continue;
-                }
-
-                ItemStack item = new ItemStack(material);
-                int damage = section.getInt("item.damage", 0);
-                if (damage != 0) {
-                    setItemDamage(item, damage);
-                }
-
-                int quantity = section.getInt("item.quantity", 1);
-                item.setAmount(quantity);
-
-                ItemMeta itemMeta = item.getItemMeta();
-                if (itemMeta != null) {
-                    String displayName = section.getString("item.name");
-                    if (displayName != null) {
-                        displayName = MessageUtility.color(displayName);
-                        itemMeta.setDisplayName(displayName);
-                    }
-
-                    List<String> loreList = section.getStringList("item.lore");
-                    if (!loreList.isEmpty()) {
-                        loreList = MessageUtility.colorList(loreList);
-                        itemMeta.setLore(loreList);
-                    }
-
-                    int customModelData = section.getInt("item.customModelData");
-                    if (customModelData != 0) {
-                        itemMeta.setCustomModelData(customModelData);
-                    }
-
-                    item.setItemMeta(itemMeta);
-                }
-
-                List<String> consoleCommandList = section.getStringList("commandsOnClickConsole");
-                List<String> playerCommandList = section.getStringList("commandsOnClick");
-
-                GuiItem guiItem = new GuiItem(item, e -> {
-                    e.setCancelled(true);
-                    HumanEntity human = e.getWhoClicked();
-                    String humanName = human.getName();
-
-                    CommandSender console = Bukkit.getConsoleSender();
-                    for (String consoleCommand : consoleCommandList) {
-                        String command = consoleCommand.replace("%PLAYER%", humanName);
-                        this.plugin.getScheduler().runTask(() -> Bukkit.dispatchCommand(console, command));
-                    }
-
-                    for (String playerCommand : playerCommandList) {
-                        String command = playerCommand.replace("%PLAYER%", humanName);
-                        this.plugin.getScheduler().runTaskAtEntity(human, () -> Bukkit.dispatchCommand(human, command));
-                    }
-
-                    if (section.getBoolean("item.sellinventory")) {
-                        human.closeInventory();
-                        commandBase(Bukkit.getPlayer(humanName));
-                    }
-                });
-            
-                int slot = section.getInt("slot");
-                gui.setItem(slot, guiItem);
-
-                ignoredSlotSet.add(slot);
+        Set<String> sectionDecorationsKeys = sectionDecorations.getKeys(false);
+        for (String key : sectionDecorationsKeys) {
+            ConfigurationSection section = sectionDecorations.getConfigurationSection(key);
+            if (section == null) {
+                continue;
             }
+
+            Material material;
+            String materialName = section.getString("item.material");
+            if (materialName == null || (material = Material.matchMaterial(materialName)) == null
+                    || !section.isInt("slot") || section.getInt("slot") > ((gui.getRows() * 9) - 1)
+                    || section.getInt("slot") < 0) {
+                Logger logger = this.plugin.getLogger();
+                logger.warning("Failed to load decoration item with id '" + key + "'.");
+                continue;
+            }
+
+            ItemStack item = new ItemStack(material);
+            setItemDamage(item, section.getInt("item.damage", 0));
+            item.setAmount(section.getInt("item.quantity", 1));
+
+            ItemMeta itemMeta = item.getItemMeta();
+            if (itemMeta != null) {
+                String displayName = section.getString("item.name");
+                if (displayName != null) {
+                    displayName = MessageUtility.color(displayName);
+                    itemMeta.setDisplayName(displayName);
+                }
+
+                List<String> loreList = section.getStringList("item.lore");
+                if (!loreList.isEmpty()) {
+                    loreList = MessageUtility.colorList(loreList);
+                    itemMeta.setLore(loreList);
+                }
+
+                int customModelData = section.getInt("item.customModelData");
+                if (customModelData != 0) {
+                    itemMeta.setCustomModelData(customModelData);
+                }
+
+                item.setItemMeta(itemMeta);
+            }
+
+            List<String> consoleCommandList = section.getStringList("commandsOnClickConsole");
+            List<String> playerCommandList = section.getStringList("commandsOnClick");
+
+            GuiItem guiItem = new GuiItem(item, e -> {
+                e.setCancelled(true);
+                HumanEntity human = e.getWhoClicked();
+                String humanName = human.getName();
+
+                CommandSender console = Bukkit.getConsoleSender();
+                for (String consoleCommand : consoleCommandList) {
+                    String command = consoleCommand.replace("%PLAYER%", humanName);
+                    this.plugin.getScheduler().runTask(() -> Bukkit.dispatchCommand(console, command));
+                }
+
+                for (String playerCommand : playerCommandList) {
+                    String command = playerCommand.replace("%PLAYER%", humanName);
+                    this.plugin.getScheduler().runTaskAtEntity(human, () -> Bukkit.dispatchCommand(human, command));
+                }
+
+                if (section.getBoolean("item.sellinventory")) {
+                    human.closeInventory();
+                    commandBase(Bukkit.getPlayer(humanName));
+                }
+            });
+
+            int slot = section.getInt("slot");
+            gui.setItem(slot, guiItem);
+
+            ignoredSlotSet.add(slot);
         }
     }
 
@@ -377,25 +366,22 @@ public final class CommandSellGUI implements TabExecutor {
 
         double totalPrice = 0;
         int itemAmount = 0;
-        boolean[] excessItems = {false};
+        boolean excessItems = false;
         boolean itemsPlacedInGui = false;
 
         Inventory inventory = event.getInventory();
         for (int a = 0; a < inventory.getSize(); a++) {
             ItemStack i = inventory.getItem(a);
 
-            if (i == null) {
+            // Quick check for invalid items: null or ignored item
+            if (i == null || ignoredSlotSet.contains(a)) {
                 continue;
             }
 
-            if (ignoredSlotSet.contains(a)) {
-                continue;
-            }
+            itemsPlacedInGui = true;
 
             ItemStack singleItem = new ItemStack(i);
             singleItem.setAmount(1);
-
-            itemsPlacedInGui = true;
 
             if (itemStackSellPriceCache.getOrDefault(singleItem, new ShopItemPriceValue(null, 0.0)).getSellPrice() > 0 || ShopHandler.getItemSellPrice(i, player) > 0) {
                 itemAmount += i.getAmount();
@@ -455,142 +441,144 @@ public final class CommandSellGUI implements TabExecutor {
                     e.printStackTrace();
                 }
             } else {
+                excessItems = true;
+
                 Location location = player.getLocation().add(0.0D, 0.5D, 0.0D);
                 Map<Integer, ItemStack> fallenItems = event.getPlayer().getInventory().addItem(i);
                 Runnable task = () -> {
                     World world = player.getWorld();
                     fallenItems.values().forEach(item -> {
                         world.dropItemNaturally(location, item);
-                        excessItems[0] = true;
                     });
                 };
                 this.plugin.getScheduler().runTaskAtLocation(location, task);
             }
         }
 
-        if (excessItems[0]) {
+        if (excessItems) {
             sendMessage(player, "inventory_full");
         }
 
-        if (totalPrice > 0) {
-            PlayerHandler.playSound((Player) event.getPlayer(), "success");
-            StringBuilder formattedPricing = new StringBuilder();
-            for (Entry<EconomyType, Double> entry : moneyMap.entrySet()) {
-                EconomyProvider economyProvider = ShopGuiPlusApi.getPlugin().getEconomyManager()
-                        .getEconomyProvider(entry.getKey());
-                economyProvider.deposit(player, entry.getValue());
-                formattedPricing.append(economyProvider.getCurrencyPrefix()).append(StringFormatter
-                                .getFormattedNumber(entry.getValue())).append(economyProvider.getCurrencySuffix())
-                        .append(", ");
-            }
-
-            if (formattedPricing.toString().endsWith(", ")) {
-                formattedPricing = new StringBuilder(formattedPricing.substring(0,
-                        formattedPricing.length() - 2));
-            }
-
-            List<String> receiptList = new LinkedList<>();
-            List<String> itemList = new LinkedList<>();
-
-            if (configuration.getInt("options.receipt_type") == 1
-                    || Objects.requireNonNull(configuration.getString("messages.items_sold")).contains("{list}")) {
-                for (Entry<ItemStack, Map<Short, Integer>> entry : soldMap2.entrySet()) {
-                    for (Entry<Short, Integer> damageEntry : entry.getValue().entrySet()) {
-                        @Deprecated
-                        ItemStack materialItemStack = entry.getKey();
-
-                        double profits = ShopHandler.getItemSellPrice(materialItemStack, player)
-                                * damageEntry.getValue();
-                        String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager()
-                                .getEconomyProvider(ShopHandler.getEconomyType(materialItemStack))
-                                .getCurrencyPrefix() + StringFormatter.getFormattedNumber(profits)
-                                + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(
-                                        ShopHandler.getEconomyType(materialItemStack))
-                                .getCurrencySuffix();
-                    
-                        String itemNameFormatted = StringFormatter.capitalize(materialItemStack.getType()
-                                .name().replace("AETHER_LEGACY_", "")
-                                .replace("LOST_AETHER_", "")
-                                .replace("_", " ").toLowerCase());
-
-                        ItemMeta itemMeta = materialItemStack.getItemMeta();
-                        if (itemMeta != null && itemMeta.hasDisplayName()) {
-                            String displayName = itemMeta.getDisplayName();
-                            if (!displayName.isEmpty()) {
-                                itemNameFormatted = materialItemStack.getItemMeta().getDisplayName();
-                            }
-                        }
-
-                        if (minorVersion <= 12 && !configuration.getBoolean("options.show_item_damage")) {
-                            itemNameFormatted += (":" + damageEntry.getKey());
-                        }
-
-                        String finalItemNameFormatted = itemNameFormatted;
-                        String itemLine = getMessage("receipt_item_layout", message -> message
-                                .replace("{amount}", String.valueOf(damageEntry.getValue()))
-                                .replace("{item}", finalItemNameFormatted)
-                                .replace("{price}", profitsFormatted));
-
-                        receiptList.add(itemLine);
-                        itemList.add(itemNameFormatted);
-                    }
-                }
-            }
-
-            String itemAmountFormatted = StringFormatter.getFormattedNumber((double) itemAmount);
-            if (configuration.getInt("options.receipt_type") == 1) {
-                int finalItemAmount = itemAmount;
-                StringBuilder finalFormattedPricing1 = formattedPricing;
-
-                TextComponent itemsSoldComponent = getTextComponentMessage("items_sold", message -> message
-                        .replace("{earning}", finalFormattedPricing1)
-                        .replace("{receipt}", "")
-                        .replace("{list}", String.join(", ", itemList))
-                        .replace("{amount}", String.valueOf(finalItemAmount)));
-                itemsSoldComponent.addExtra(" ");
-
-                String receiptHoverMessage = (getMessage("receipt_title", null) + ChatColor.RESET + String.join("\n", receiptList) + ChatColor.RESET);
-
-                TextComponent receiptNameComponent = getTextComponentMessage("receipt_text", null);
-                BaseComponent[] hoverEventComponents = {
-                        new TextComponent(receiptHoverMessage)
-                };
-
-                HoverEvent hoverEvent = new HoverEvent(Action.SHOW_TEXT, hoverEventComponents);
-                receiptNameComponent.setHoverEvent(hoverEvent);
-
-                sendMessage(player, Arrays.asList(itemsSoldComponent, receiptNameComponent));
-            } else {
-                StringBuilder finalFormattedPricing = formattedPricing;
-                sendMessage(player, "items_sold", message -> message.replace("{earning}",
-                                finalFormattedPricing)
-                        .replace("{receipt}", "")
-                        .replace("{list}", String.join(", ", itemList))
-                        .replace("{amount}", itemAmountFormatted));
-            }
-
-            /* Subject to deprecation */
-            if (plugin.fileLogger != null) {
-                plugin.fileLogger.info(player.getName() + " (" + player.getUniqueId() + ") sold: {" + HexColorUtility.purgeAllColor(String.join(", ", receiptList)) + "}");
-            }
-
-            if (configuration.getBoolean("options.sell_titles")) {
-                sendSellTitles(player, formattedPricing, itemAmountFormatted);
-            }
-
-            if (configuration.getBoolean("options.action_bar_msgs") && minorVersion >= 9) {
-                sendActionBar(player, formattedPricing, itemAmountFormatted);
-            }
-        } else {
+        if (totalPrice == 0) {
             PlayerHandler.playSound(player, "failed");
             sendMessage(player, itemsPlacedInGui ? "no_items_sold" : "no_items_in_gui");
+            return;
+        }
+
+        PlayerHandler.playSound((Player) event.getPlayer(), "success");
+        StringBuilder formattedPricing = new StringBuilder();
+        for (Entry<EconomyType, Double> entry : moneyMap.entrySet()) {
+            EconomyProvider economyProvider = ShopGuiPlusApi.getPlugin().getEconomyManager()
+                    .getEconomyProvider(entry.getKey());
+            economyProvider.deposit(player, entry.getValue());
+            formattedPricing.append(economyProvider.getCurrencyPrefix()).append(StringFormatter
+                            .getFormattedNumber(entry.getValue())).append(economyProvider.getCurrencySuffix())
+                    .append(", ");
+        }
+
+        if (formattedPricing.toString().endsWith(", ")) {
+            formattedPricing = new StringBuilder(formattedPricing.substring(0,
+                    formattedPricing.length() - 2));
+        }
+
+        List<String> receiptList = new LinkedList<>();
+        List<String> itemList = new LinkedList<>();
+
+        if (configuration.getInt("options.receipt_type", 0) == 1
+                || configuration.getString("messages.items_sold", "").contains("{list}")) {
+            for (Entry<ItemStack, Map<Short, Integer>> entry : soldMap2.entrySet()) {
+                for (Entry<Short, Integer> damageEntry : entry.getValue().entrySet()) {
+                    @Deprecated
+                    ItemStack materialItemStack = entry.getKey();
+
+                    double profits = ShopHandler.getItemSellPrice(materialItemStack, player)
+                            * damageEntry.getValue();
+                    String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager()
+                            .getEconomyProvider(ShopHandler.getEconomyType(materialItemStack))
+                            .getCurrencyPrefix() + StringFormatter.getFormattedNumber(profits)
+                            + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(
+                                    ShopHandler.getEconomyType(materialItemStack))
+                            .getCurrencySuffix();
+
+                    String itemNameFormatted = StringFormatter.capitalize(materialItemStack.getType()
+                            .name().replace("AETHER_LEGACY_", "")
+                            .replace("LOST_AETHER_", "")
+                            .replace("_", " ").toLowerCase());
+
+                    ItemMeta itemMeta = materialItemStack.getItemMeta();
+                    if (itemMeta != null && itemMeta.hasDisplayName()) {
+                        String displayName = itemMeta.getDisplayName();
+                        if (!displayName.isEmpty()) {
+                            itemNameFormatted = materialItemStack.getItemMeta().getDisplayName();
+                        }
+                    }
+
+                    if (minorVersion <= 12 && !configuration.getBoolean("options.show_item_damage", false)) {
+                        itemNameFormatted += (":" + damageEntry.getKey());
+                    }
+
+                    String finalItemNameFormatted = itemNameFormatted;
+                    String itemLine = getMessage("receipt_item_layout", message -> message
+                            .replace("{amount}", String.valueOf(damageEntry.getValue()))
+                            .replace("{item}", finalItemNameFormatted)
+                            .replace("{price}", profitsFormatted));
+
+                    receiptList.add(itemLine);
+                    itemList.add(itemNameFormatted);
+                }
+            }
+        }
+
+        String itemAmountFormatted = StringFormatter.getFormattedNumber((double) itemAmount);
+        if (configuration.getInt("options.receipt_type", 0) == 1) {
+            int finalItemAmount = itemAmount;
+            StringBuilder finalFormattedPricing1 = formattedPricing;
+
+            TextComponent itemsSoldComponent = getTextComponentMessage("items_sold", message -> message
+                    .replace("{earning}", finalFormattedPricing1)
+                    .replace("{receipt}", "")
+                    .replace("{list}", String.join(", ", itemList))
+                    .replace("{amount}", String.valueOf(finalItemAmount)));
+            itemsSoldComponent.addExtra(" ");
+
+            String receiptHoverMessage = (getMessage("receipt_title", null) + ChatColor.RESET + String.join("\n", receiptList) + ChatColor.RESET);
+
+            TextComponent receiptNameComponent = getTextComponentMessage("receipt_text", null);
+            BaseComponent[] hoverEventComponents = {
+                    new TextComponent(receiptHoverMessage)
+            };
+
+            HoverEvent hoverEvent = new HoverEvent(Action.SHOW_TEXT, hoverEventComponents);
+            receiptNameComponent.setHoverEvent(hoverEvent);
+
+            sendMessage(player, Arrays.asList(itemsSoldComponent, receiptNameComponent));
+        } else {
+            StringBuilder finalFormattedPricing = formattedPricing;
+            sendMessage(player, "items_sold", message -> message.replace("{earning}",
+                            finalFormattedPricing)
+                    .replace("{receipt}", "")
+                    .replace("{list}", String.join(", ", itemList))
+                    .replace("{amount}", itemAmountFormatted));
+        }
+
+        /* Subject to deprecation */
+        if (plugin.fileLogger != null) {
+            plugin.fileLogger.info(player.getName() + " (" + player.getUniqueId() + ") sold: {" + HexColorUtility.purgeAllColor(String.join(", ", receiptList)) + "}");
+        }
+
+        if (configuration.getBoolean("options.sell_titles", false)) {
+            sendSellTitles(player, formattedPricing, itemAmountFormatted);
+        }
+
+        if (configuration.getBoolean("options.action_bar_msgs", false) && minorVersion >= 9) {
+            sendActionBar(player, formattedPricing, itemAmountFormatted);
         }
     }
 
     private String getMessage(String path, @Nullable Function<String, String> replacer) {
         CommentedConfiguration configuration = this.plugin.getConfiguration();
-        String message = configuration.getString("messages." + path);
-        if (message == null || message.isEmpty()) {
+        String message = configuration.getString("messages." + path, "");
+        if (message.isEmpty()) {
             return "";
         }
 

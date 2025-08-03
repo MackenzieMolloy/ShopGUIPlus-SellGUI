@@ -36,8 +36,7 @@ public class PlayerHandler {
             pitch = (float) configuration.getDouble("options.sounds.pitch");
         }
 
-        if (configuration.isDouble("options.sounds.volume")
-                || configuration.isInt("options.sounds.volume")) {
+        if (configuration.isDouble("options.sounds.volume") || configuration.isInt("options.sounds.volume")) {
             volume = (float) configuration.getDouble("options.sounds.volume");
         }
 

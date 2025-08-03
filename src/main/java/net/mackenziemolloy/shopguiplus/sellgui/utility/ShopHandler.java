@@ -54,7 +54,6 @@ public class ShopHandler {
             if (Double.valueOf(priceToReturn.split("\\.")[1]) == 0) {
                 priceToReturn = priceToReturn.split("\\.")[0];
             }
-
         }
 
         return priceToReturn;

@@ -17,7 +17,7 @@ public class StringFormatter {
 
   public static String abbreviateQuantity(double count) {
     if (count < 1000) {
-      return "" + count;
+      return String.valueOf(count);
     }
 
     int exp = (int) (Math.log(count) / Math.log(1000));
@@ -34,7 +34,6 @@ public class StringFormatter {
     String numberToReturn =  numberToFormat.toString();
 
     if (configuration.getBoolean("options.rounded_pricing")) {
-
       final DecimalFormat formatToApply = new DecimalFormat("#,##0.00");
       numberToReturn = formatToApply.format(numberToFormat);
     }
