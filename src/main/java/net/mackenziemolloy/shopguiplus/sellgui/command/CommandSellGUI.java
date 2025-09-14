@@ -438,7 +438,7 @@ public final class CommandSellGUI implements TabExecutor {
                             (ShopPostTransactionEvent) Class.forName("net.brcdev.shopgui.event.ShopPostTransactionEvent")
                                     .getDeclaredConstructor(ShopTransactionResult.class).newInstance(shopTransactionResult);
 
-                    scheduler.runNextTick(t -> Bukkit.getPluginManager().callEvent(shopPostTransactionEvent));
+                    scheduler.runNextTick(task -> Bukkit.getPluginManager().callEvent(shopPostTransactionEvent));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
