@@ -40,7 +40,9 @@ shadowJar {
     relocate "org.bstats", "net.mackenziemolloy.shopguiplus.sellgui.bstats"
     relocate "com.tcoded.folialib", "net.mackenziemolloy.shopguiplus.sellgui.lib.folialib"
 
-    minimize {}
+    minimize {
+        exclude(dependency("com.tcoded:FoliaLib:.*"))
+    }
 }
 
 tasks.build.dependsOn tasks.shadowJar
