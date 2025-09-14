@@ -25,7 +25,7 @@ public class UpdateChecker {
     }
 
     public void getVersion(final Consumer<String> consumer) {
-        scheduler.runAsync(ignoredTask -> getVersionInternal(consumer));
+        scheduler.runAsync(task -> getVersionInternal(consumer));
     }
 
     private void getVersionInternal(Consumer<String> consumer) {
