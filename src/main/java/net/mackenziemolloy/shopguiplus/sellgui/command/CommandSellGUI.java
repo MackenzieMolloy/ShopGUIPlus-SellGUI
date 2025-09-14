@@ -447,7 +447,7 @@ public final class CommandSellGUI implements TabExecutor {
 
                 Location location = player.getLocation().add(0.0D, 0.5D, 0.0D);
                 Map<Integer, ItemStack> fallenItems = event.getPlayer().getInventory().addItem(i);
-                scheduler.runAtLocation(location, t -> {
+                scheduler.runAtLocation(location, task -> {
                     World world = player.getWorld();
                     fallenItems.values().forEach(item -> world.dropItemNaturally(location, item));
                 });
