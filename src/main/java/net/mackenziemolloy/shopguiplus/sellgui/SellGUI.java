@@ -1,6 +1,7 @@
 package net.mackenziemolloy.shopguiplus.sellgui;
 
-import me.nahu.scheduler.wrapper.FoliaWrappedJavaPlugin;
+import com.tcoded.folialib.FoliaLib;
+import com.tcoded.folialib.impl.PlatformScheduler;
 import net.mackenziemolloy.shopguiplus.sellgui.command.CommandSellGUI;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.CommentedConfiguration;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.FileUtils;
@@ -13,6 +14,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,9 +24,10 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public final class SellGUI extends FoliaWrappedJavaPlugin {
+public final class SellGUI extends JavaPlugin {
     private final CommentedConfiguration configuration;
     private static SellGUI instance;
+    private static PlatformScheduler scheduler;
     public Logger fileLogger;
     private FileHandler handler;
     private String version;
@@ -39,6 +42,9 @@ public final class SellGUI extends FoliaWrappedJavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
+
+        FoliaLib foliaLib = new FoliaLib(this);
+        scheduler = foliaLib.getScheduler();
 
         new CommandSellGUI(this).register();
         Logger logger = getLogger();
@@ -158,5 +164,9 @@ public final class SellGUI extends FoliaWrappedJavaPlugin {
 
     public static SellGUI getInstance() {
         return instance;
+    }
+
+    public static PlatformScheduler scheduler() {
+        return scheduler;
     }
 }

@@ -18,6 +18,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
+import com.tcoded.folialib.impl.PlatformScheduler;
 import net.brcdev.shopgui.ShopGuiPlugin;
 import net.brcdev.shopgui.event.ShopPreTransactionEvent;
 import net.mackenziemolloy.shopguiplus.sellgui.objects.ShopItemPriceValue;
@@ -70,9 +71,11 @@ import org.jetbrains.annotations.Nullable;
 @SuppressWarnings("deprecation")
 public final class CommandSellGUI implements TabExecutor {
     private final SellGUI plugin;
+    private final PlatformScheduler scheduler;
     
     public CommandSellGUI(SellGUI plugin) {
         this.plugin = Objects.requireNonNull(plugin, "The plugin must not be null!");
+        this.scheduler = SellGUI.scheduler();
     }
 
     @Override
@@ -222,7 +225,7 @@ public final class CommandSellGUI implements TabExecutor {
 
         Set<Integer> ignoredSlotSet = new HashSet<>();
         setDecorationItems(configuration, gui, ignoredSlotSet);
-        gui.setCloseGuiAction(event -> this.plugin.getScheduler().runTaskAtEntity(player, () -> onGuiClose(player, event, ignoredSlotSet)));
+        gui.setCloseGuiAction(event -> scheduler.runAtEntity(player, task -> onGuiClose(player, event, ignoredSlotSet)));
 
         gui.open(player);
         return true;
@@ -305,12 +308,12 @@ public final class CommandSellGUI implements TabExecutor {
                 CommandSender console = Bukkit.getConsoleSender();
                 for (String consoleCommand : consoleCommandList) {
                     String command = consoleCommand.replace("%PLAYER%", humanName);
-                    this.plugin.getScheduler().runTask(() -> Bukkit.dispatchCommand(console, command));
+                    scheduler.runNextTick(task -> Bukkit.dispatchCommand(console, command));
                 }
 
                 for (String playerCommand : playerCommandList) {
                     String command = playerCommand.replace("%PLAYER%", humanName);
-                    this.plugin.getScheduler().runTaskAtEntity(human, () -> Bukkit.dispatchCommand(human, command));
+                    scheduler.runAtEntity(human, task -> Bukkit.dispatchCommand(human, command));
                 }
 
                 if (section.getBoolean("item.sellinventory")) {
@@ -435,8 +438,7 @@ public final class CommandSellGUI implements TabExecutor {
                             (ShopPostTransactionEvent) Class.forName("net.brcdev.shopgui.event.ShopPostTransactionEvent")
                                     .getDeclaredConstructor(ShopTransactionResult.class).newInstance(shopTransactionResult);
 
-                    Runnable task = () -> Bukkit.getPluginManager().callEvent(shopPostTransactionEvent);
-                    this.plugin.getScheduler().runTask(task);
+                    scheduler.runNextTick(t -> Bukkit.getPluginManager().callEvent(shopPostTransactionEvent));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -445,13 +447,10 @@ public final class CommandSellGUI implements TabExecutor {
 
                 Location location = player.getLocation().add(0.0D, 0.5D, 0.0D);
                 Map<Integer, ItemStack> fallenItems = event.getPlayer().getInventory().addItem(i);
-                Runnable task = () -> {
+                scheduler.runAtLocation(location, t -> {
                     World world = player.getWorld();
-                    fallenItems.values().forEach(item -> {
-                        world.dropItemNaturally(location, item);
-                    });
-                };
-                this.plugin.getScheduler().runTaskAtLocation(location, task);
+                    fallenItems.values().forEach(item -> world.dropItemNaturally(location, item));
+                });
             }
         }
 

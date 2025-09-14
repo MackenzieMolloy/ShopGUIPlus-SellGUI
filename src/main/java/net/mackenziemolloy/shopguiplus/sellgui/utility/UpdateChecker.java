@@ -9,20 +9,23 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import me.nahu.scheduler.wrapper.FoliaWrappedJavaPlugin;
+import com.tcoded.folialib.impl.PlatformScheduler;
+import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class UpdateChecker {
-    private final FoliaWrappedJavaPlugin plugin;
+    private final JavaPlugin plugin;
+    private final PlatformScheduler scheduler;
     private final int resourceId;
 
-    public UpdateChecker(FoliaWrappedJavaPlugin plugin, int resourceId) {
+    public UpdateChecker(JavaPlugin plugin, int resourceId) {
         this.plugin = plugin;
+        this.scheduler = SellGUI.scheduler();
         this.resourceId = resourceId;
     }
 
     public void getVersion(final Consumer<String> consumer) {
-        Runnable task = () -> getVersionInternal(consumer);
-        this.plugin.getScheduler().runTaskAsynchronously(task);
+        scheduler.runAsync(ignoredTask -> getVersionInternal(consumer));
     }
 
     private void getVersionInternal(Consumer<String> consumer) {
@@ -31,7 +34,7 @@ public class UpdateChecker {
 
         try (
             InputStream inputStream = new URL(updateUrl).openStream();
-            Scanner scanner = new Scanner(inputStream);
+            Scanner scanner = new Scanner(inputStream)
         ) {
             if (scanner.hasNext()) {
                 consumer.accept(scanner.next());
