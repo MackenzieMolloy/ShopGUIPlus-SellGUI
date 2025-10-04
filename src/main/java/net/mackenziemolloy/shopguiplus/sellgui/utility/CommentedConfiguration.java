@@ -21,6 +21,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -132,7 +133,7 @@ public final class CommentedConfiguration extends YamlConfiguration {
      * @throws InvalidConfigurationException if the contents are invalid.
      */
     @Override
-    public void loadFromString(String contents) throws InvalidConfigurationException {
+    public void loadFromString(@NotNull String contents) throws InvalidConfigurationException {
         //Load data of the base yaml (keys and values).
         super.loadFromString(contents);
 
@@ -159,7 +160,7 @@ public final class CommentedConfiguration extends YamlConfiguration {
                 //If there is a valid comment for the section.
                 if(comments.length() > 1)
                     //Adding the comment.
-                    setComment(currentSection, comments.toString().substring(0, comments.length() - 1));
+                    setComment(currentSection, comments.substring(0, comments.length() - 1));
 
                 //Reseting the comment variable for further usage.
                 comments = new StringBuilder();
@@ -211,7 +212,7 @@ public final class CommentedConfiguration extends YamlConfiguration {
         for(String line : lines)
             contents.append("\n").append(line);
 
-        return contents.length() == 0 ? "" : contents.substring(1);
+        return contents.isEmpty() ? "" : contents.substring(1);
     }
 
     /**
@@ -285,7 +286,7 @@ public final class CommentedConfiguration extends YamlConfiguration {
      * @param file The file to load the config from.
      * @return A new instance of CommentedConfiguration contains all the data (keys, values and comments).
      */
-    public static CommentedConfiguration loadConfiguration(File file) {
+    public static CommentedConfiguration loadConfiguration(@NotNull File file) {
         try {
             FileInputStream stream = new FileInputStream(file);
             return loadConfiguration(new InputStreamReader(stream, StandardCharsets.UTF_8));
@@ -309,7 +310,7 @@ public final class CommentedConfiguration extends YamlConfiguration {
      * @param reader The reader to load the config from.
      * @return A new instance of CommentedConfiguration contains all the data (keys, values and comments).
      */
-    public static CommentedConfiguration loadConfiguration(Reader reader) {
+    public static CommentedConfiguration loadConfiguration(@NotNull Reader reader) {
         //Creating a blank instance of the config.
         CommentedConfiguration config = new CommentedConfiguration();
 
@@ -366,12 +367,12 @@ public final class CommentedConfiguration extends YamlConfiguration {
             newSection = currentSection + "." + newSection;
         }
 
-        //Looking for the parent of the the new section.
+        // Looking for the parent of the new section.
         else{
             String parentSection = currentSection;
 
             /*Getting the parent of the new section. The loop will stop in one of the following situations:
-            1) The parent is empty - which means we have no where to go, as that's the root section.
+            1) The parent is empty - which means we have nowhere to go, as that's the root section.
             2) The config contains a valid path that was built with <parent-section>.<new-section>.*/
             while(!parentSection.isEmpty() &&
               !commentedConfig.contains((parentSection = getParentPath(parentSection)) + "." + newSection));
@@ -470,7 +471,7 @@ public final class CommentedConfiguration extends YamlConfiguration {
 
         @Override
         public boolean equals(Object obj) {
-            return obj instanceof Pair && key.equals(((Pair) obj).key) && value.equals(((Pair) obj).value);
+            return obj instanceof Pair && key.equals(((Pair<?, ?>) obj).key) && value.equals(((Pair<?, ?>) obj).value);
         }
 
         @Override

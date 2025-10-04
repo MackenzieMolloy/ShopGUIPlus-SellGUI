@@ -58,7 +58,7 @@ public final class SellGUI extends JavaPlugin {
         setupMetrics();
         setupUpdates();
         initLogger();
-        
+
         logger.info("*-*");
         logger.info("ShopGUIPlus SellGUI");
         logger.info("Made by Mackenzie Molloy");

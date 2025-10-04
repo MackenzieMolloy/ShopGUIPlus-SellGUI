@@ -19,11 +19,29 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 
 import com.tcoded.folialib.impl.PlatformScheduler;
+import dev.triumphteam.gui.guis.Gui;
+import dev.triumphteam.gui.guis.GuiItem;
+import net.brcdev.shopgui.ShopGuiPlusApi;
 import net.brcdev.shopgui.ShopGuiPlugin;
+import net.brcdev.shopgui.economy.EconomyType;
+import net.brcdev.shopgui.event.ShopPostTransactionEvent;
 import net.brcdev.shopgui.event.ShopPreTransactionEvent;
+import net.brcdev.shopgui.provider.economy.EconomyProvider;
+import net.brcdev.shopgui.shop.ShopManager.ShopAction;
+import net.brcdev.shopgui.shop.ShopTransactionResult;
+import net.brcdev.shopgui.shop.ShopTransactionResult.ShopTransactionResultType;
+import net.brcdev.shopgui.shop.item.ShopItem;
+import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
 import net.mackenziemolloy.shopguiplus.sellgui.objects.ShopItemPriceValue;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.*;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.HexColorUtility;
+import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.MessageUtility;
+import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.VersionUtility;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.HoverEvent.Action;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -46,25 +64,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.util.StringUtil;
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.HoverEvent.Action;
-import net.md_5.bungee.api.chat.TextComponent;
-
-import dev.triumphteam.gui.guis.Gui;
-import dev.triumphteam.gui.guis.GuiItem;
-import net.brcdev.shopgui.ShopGuiPlusApi;
-import net.brcdev.shopgui.economy.EconomyType;
-import net.brcdev.shopgui.event.ShopPostTransactionEvent;
-import net.brcdev.shopgui.provider.economy.EconomyProvider;
-import net.brcdev.shopgui.shop.item.ShopItem;
-import net.brcdev.shopgui.shop.ShopManager.ShopAction;
-import net.brcdev.shopgui.shop.ShopTransactionResult;
-import net.brcdev.shopgui.shop.ShopTransactionResult.ShopTransactionResultType;
-import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
-import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.MessageUtility;
-import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.VersionUtility;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,10 +71,18 @@ import org.jetbrains.annotations.Nullable;
 public final class CommandSellGUI implements TabExecutor {
     private final SellGUI plugin;
     private final PlatformScheduler scheduler;
-    
+
     public CommandSellGUI(SellGUI plugin) {
         this.plugin = Objects.requireNonNull(plugin, "The plugin must not be null!");
         this.scheduler = SellGUI.scheduler();
+    }
+
+    public void register() {
+        PluginCommand pluginCommand = this.plugin.getCommand("sellgui");
+        if (pluginCommand != null) {
+            pluginCommand.setExecutor(this);
+            pluginCommand.setTabCompleter(this);
+        }
     }
 
     @Override
@@ -101,26 +108,11 @@ public final class CommandSellGUI implements TabExecutor {
         }
 
         String sub = args[0].toLowerCase(Locale.US);
-        switch (sub) {
-            case "rl", "reload" -> {
-                return commandReload(sender);
-            }
-            case "debug", "dump" -> {
-                return commandDebug(sender);
-            }
-            default -> {
-            }
-        }
-
-        return false;
-    }
-
-    public void register() {
-        PluginCommand pluginCommand = this.plugin.getCommand("sellgui");
-        if (pluginCommand != null) {
-            pluginCommand.setExecutor(this);
-            pluginCommand.setTabCompleter(this);
-        }
+        return switch (sub) {
+            case "rl", "reload" -> commandReload(sender);
+            case "debug", "dump" -> commandDebug(sender);
+            default -> false;
+        };
     }
 
     private boolean commandReload(CommandSender sender) {
@@ -305,10 +297,9 @@ public final class CommandSellGUI implements TabExecutor {
                 HumanEntity human = e.getWhoClicked();
                 String humanName = human.getName();
 
-                CommandSender console = Bukkit.getConsoleSender();
                 for (String consoleCommand : consoleCommandList) {
                     String command = consoleCommand.replace("%PLAYER%", humanName);
-                    scheduler.runNextTick(task -> Bukkit.dispatchCommand(console, command));
+                    scheduler.runNextTick(task -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command));
                 }
 
                 for (String playerCommand : playerCommandList) {
@@ -464,7 +455,7 @@ public final class CommandSellGUI implements TabExecutor {
             return;
         }
 
-        PlayerHandler.playSound((Player) event.getPlayer(), "success");
+        PlayerHandler.playSound(player, "success");
         StringBuilder formattedPricing = new StringBuilder();
         for (Entry<EconomyType, Double> entry : moneyMap.entrySet()) {
             EconomyProvider economyProvider = ShopGuiPlusApi.getPlugin().getEconomyManager()
@@ -638,7 +629,7 @@ public final class CommandSellGUI implements TabExecutor {
     private void sendActionBar(Player player, CharSequence price, String amount) {
         Function<String, String> replacer = message -> message.replace("{earning}", price)
                 .replace("{amount}", amount);
-        
+
         TextComponent message = getTextComponentMessage("action_bar_items_sold", replacer);
         player.spigot().sendMessage(ChatMessageType.ACTION_BAR, message);
     }
