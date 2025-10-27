@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import net.md_5.bungee.api.ChatColor;
 
 public final class HexColorUtility {
+
     private static final Map<Character, Pattern> KNOWN_PATTERN_MAP = new ConcurrentHashMap<>();
 
     /**
@@ -87,8 +88,6 @@ public final class HexColorUtility {
         String noMinecraftColorCodes = input.replaceAll("[&§][0-9a-fA-FkKlLnNoOrR]", "");
 
         // Remove hex color codes (e.g., &#FFFF0)
-        String noHexColorCodes = noMinecraftColorCodes.replaceAll("[&§]#([0-9a-fA-F]){6}", "");
-
-        return noHexColorCodes;
+        return noMinecraftColorCodes.replaceAll("[&§]#([0-9a-fA-F]){6}", "");
     }
 }

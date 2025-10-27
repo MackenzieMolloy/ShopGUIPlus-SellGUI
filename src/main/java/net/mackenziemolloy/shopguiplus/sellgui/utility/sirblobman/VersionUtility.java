@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Server;
 
 public final class VersionUtility {
+
     static {
         String bukkitVersion = Bukkit.getBukkitVersion();
         if (bukkitVersion.contains("-pre") || bukkitVersion.contains("-rc")) {

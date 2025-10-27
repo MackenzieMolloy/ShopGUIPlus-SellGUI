@@ -7,6 +7,7 @@ import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
 public final class MessageUtility {
+
     /**
      * @param message The message that will be colored
      * @return A new string containing {@code message} but with the color codes replaced,
@@ -52,6 +53,7 @@ public final class MessageUtility {
             String color = color(message);
             colorList.add(color);
         }
+
         return colorList;
     }
 

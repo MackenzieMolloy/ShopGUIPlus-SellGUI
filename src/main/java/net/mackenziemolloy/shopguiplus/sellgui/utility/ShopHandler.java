@@ -15,6 +15,7 @@ import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
 import org.jetbrains.annotations.NotNull;
 
 public class ShopHandler {
+
     @NotNull
     public static EconomyType getEconomyType(ItemStack material) {
         EconomyType economyType = ShopGuiPlusApi.getItemStackShop(material).getEconomyType();

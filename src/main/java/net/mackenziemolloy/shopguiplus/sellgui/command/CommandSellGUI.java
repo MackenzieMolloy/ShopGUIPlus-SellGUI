@@ -66,9 +66,12 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 @SuppressWarnings("deprecation")
 public final class CommandSellGUI implements TabExecutor {
+
     private final SellGUI plugin;
     private final PlatformScheduler scheduler;
 
@@ -212,14 +215,15 @@ public final class CommandSellGUI implements TabExecutor {
         }
 
         String sellGuiTitle = getMessage("sellgui_title", null);
-        Gui gui = new Gui(guiSize, sellGuiTitle, Collections.emptySet());
+        Component sellGuiTitleComponent = LegacyComponentSerializer.legacySection().deserialize(sellGuiTitle);
+        Gui gui = Gui.gui().title(sellGuiTitleComponent).rows(guiSize).create();
         PlayerHandler.playSound(player, "open");
 
         Set<Integer> ignoredSlotSet = new HashSet<>();
         setDecorationItems(configuration, gui, ignoredSlotSet);
         gui.setCloseGuiAction(event -> scheduler.runAtEntity(player, task -> onGuiClose(player, event, ignoredSlotSet)));
 
-        gui.open(player);
+        scheduler.runAtEntity(player, task -> gui.open(player));
         return true;
     }
 
@@ -277,8 +281,12 @@ public final class CommandSellGUI implements TabExecutor {
 
                 List<String> loreList = section.getStringList("item.lore");
                 if (!loreList.isEmpty()) {
-                    loreList = MessageUtility.colorList(loreList);
-                    itemMeta.setLore(loreList);
+                    List<String> processedLore = new ArrayList<>(loreList.size());
+                    for (String line : loreList) {
+                        processedLore.add(MessageUtility.color(HexColorUtility.replaceHexColors('&', line)));
+                    }
+
+                    itemMeta.setLore(processedLore);
                 }
 
                 int customModelData = section.getInt("item.customModelData");
@@ -308,7 +316,7 @@ public final class CommandSellGUI implements TabExecutor {
                 }
 
                 if (section.getBoolean("item.sellinventory")) {
-                    human.closeInventory();
+                    scheduler.runAtEntity(human, task -> human.closeInventory());
                     commandBase(Bukkit.getPlayer(humanName));
                 }
             });
@@ -534,9 +542,7 @@ public final class CommandSellGUI implements TabExecutor {
             String receiptHoverMessage = (getMessage("receipt_title", null) + ChatColor.RESET + String.join("\n", receiptList) + ChatColor.RESET);
 
             TextComponent receiptNameComponent = getTextComponentMessage("receipt_text", null);
-            BaseComponent[] hoverEventComponents = {
-                    new TextComponent(receiptHoverMessage)
-            };
+            BaseComponent[] hoverEventComponents = TextComponent.fromLegacyText(receiptHoverMessage);
 
             HoverEvent hoverEvent = new HoverEvent(Action.SHOW_TEXT, hoverEventComponents);
             receiptNameComponent.setHoverEvent(hoverEvent);
@@ -576,7 +582,7 @@ public final class CommandSellGUI implements TabExecutor {
             message = replacer.apply(message);
         }
 
-        return HexColorUtility.replaceHexColors('&', MessageUtility.color(message));
+        return MessageUtility.color(HexColorUtility.replaceHexColors('&', message));
     }
 
     private TextComponent getTextComponentMessage(String path, @Nullable Function<String, String> replacer) {
@@ -584,7 +590,13 @@ public final class CommandSellGUI implements TabExecutor {
         if (message.isEmpty()) {
             return new TextComponent("");
         } else {
-            return new TextComponent(message);
+            BaseComponent[] components = TextComponent.fromLegacyText(message);
+            TextComponent root = new TextComponent("");
+            for (BaseComponent component : components) {
+                root.addExtra(component);
+            }
+
+            return root;
         }
     }
 
@@ -599,8 +611,8 @@ public final class CommandSellGUI implements TabExecutor {
         }
 
         if (sender instanceof Player player) {
-            TextComponent textComponent = new TextComponent(TextComponent.fromLegacyText(message));
-            player.spigot().sendMessage(textComponent);
+            BaseComponent[] components = TextComponent.fromLegacyText(message);
+            player.spigot().sendMessage(components);
         } else {
             sender.sendMessage(message);
         }
@@ -608,7 +620,8 @@ public final class CommandSellGUI implements TabExecutor {
 
     private void sendMessage(Player player, List<TextComponent> textComponents) {
         boolean isTextPresent = textComponents.stream()
-                .anyMatch(component -> !component.getText().isEmpty());
+                .anyMatch(component -> component.getText() != null && !component.getText().isEmpty()
+                        || component.getExtra() != null && !component.getExtra().isEmpty());
 
         if (!isTextPresent) {
             return;

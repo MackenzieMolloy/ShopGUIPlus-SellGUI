@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import javax.net.ssl.HttpsURLConnection;
 
 public class Hastebin {
+
     private static final String BASE_URL = "https://paste.helpch.at/";
     private static final String API_URL = "https://paste.helpch.at/documents";
 
