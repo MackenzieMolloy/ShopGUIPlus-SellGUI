@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class SellGUI extends JavaPlugin {
+
     private final CommentedConfiguration configuration;
     private static SellGUI instance;
     private static PlatformScheduler scheduler;

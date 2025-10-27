@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class Validate {
+
     public static <O> @NotNull O notNull(@Nullable O value, @NotNull String message) {
         if (value == null) {
             throw new IllegalArgumentException(message);

@@ -40,7 +40,7 @@ public class StringFormatter {
 
     if (configuration.getBoolean("options.remove_trailing_zeros")) {
       if (numberToReturn.split("\\.")[1] != null) {
-        if (Double.valueOf(numberToReturn.split("\\.")[1]) == 0) {
+        if (Double.parseDouble(numberToReturn.split("\\.")[1]) == 0) {
           numberToReturn = numberToReturn.split("\\.")[0];
         }
       }

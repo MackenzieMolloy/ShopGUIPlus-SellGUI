@@ -13,6 +13,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
 
 public class PlayerHandler {
+
     private static Sound getSound(String event) throws IllegalArgumentException {
         SellGUI plugin = JavaPlugin.getPlugin(SellGUI.class);
         CommentedConfiguration configuration = plugin.getConfiguration();

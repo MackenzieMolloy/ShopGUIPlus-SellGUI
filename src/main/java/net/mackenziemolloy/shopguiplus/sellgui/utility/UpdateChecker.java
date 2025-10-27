@@ -14,6 +14,7 @@ import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class UpdateChecker {
+
     private final JavaPlugin plugin;
     private final PlatformScheduler scheduler;
     private final int resourceId;
@@ -34,8 +35,7 @@ public class UpdateChecker {
 
         try (
             InputStream inputStream = new URL(updateUrl).openStream();
-            Scanner scanner = new Scanner(inputStream)
-        ) {
+            Scanner scanner = new Scanner(inputStream)) {
             if (scanner.hasNext()) {
                 consumer.accept(scanner.next());
             }
