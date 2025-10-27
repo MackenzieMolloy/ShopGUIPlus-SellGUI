@@ -56,6 +56,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -395,12 +396,28 @@ public final class CommandSellGUI implements TabExecutor {
                 double itemSellPrice = itemStackSellPriceCache.containsKey(singleItem) ? ( itemStackSellPriceCache.get(singleItem).getSellPrice() * amount ) : ShopHandler.getItemSellPrice(i, player);
 
                 try {
-                    ShopPreTransactionEvent shopPreTransactionEvent = (ShopPreTransactionEvent) Class.forName("net.brcdev.shopgui.event.ShopPreTransactionEvent")
+                    Class<?> preEventClass = Class.forName("net.brcdev.shopgui.event.ShopPreTransactionEvent");
+                    Object shopPreTransactionEvent = preEventClass
                         .getDeclaredConstructor(ShopAction.class, ShopItem.class, Player.class, int.class, double.class)
                         .newInstance(ShopAction.SELL, ShopGuiPlusApi.getItemStackShopItem(i), player, amount, itemSellPrice);
 
-                        Bukkit.getPluginManager().callEvent(shopPreTransactionEvent);
-                        itemSellPrice = shopPreTransactionEvent.getPrice();
+                    Bukkit.getPluginManager().callEvent((Event) shopPreTransactionEvent);
+
+                    boolean cancelled = (boolean) preEventClass.getMethod("isCancelled").invoke(shopPreTransactionEvent);
+                    if (cancelled) {
+                        excessItems = true;
+
+                        Location location = player.getLocation().add(0.0D, 0.5D, 0.0D);
+                        Map<Integer, ItemStack> fallenItems = event.getPlayer().getInventory().addItem(i);
+                        scheduler.runAtLocation(location, task -> {
+                            World world = player.getWorld();
+                            fallenItems.values().forEach(item -> world.dropItemNaturally(location, item));
+                        });
+
+                        continue;
+                    }
+
+                    itemSellPrice = (double) preEventClass.getMethod("getPrice").invoke(shopPreTransactionEvent);
                 } catch (Exception exception) {
                     exception.printStackTrace();
                 }

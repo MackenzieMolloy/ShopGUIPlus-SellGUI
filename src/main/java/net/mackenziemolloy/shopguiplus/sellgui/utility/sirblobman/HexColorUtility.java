@@ -8,6 +8,8 @@ import java.util.regex.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 import net.md_5.bungee.api.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 public final class HexColorUtility {
 
@@ -39,7 +41,10 @@ public final class HexColorUtility {
         }
 
         matcher.appendTail(buffer);
-        return buffer.toString();
+
+        // Normalize Adventure legacy serializers so that colors reset styles (bold/italic/etc.)
+        Component component = LegacyComponentSerializer.legacyAmpersand().deserialize(buffer.toString());
+        return LegacyComponentSerializer.legacySection().serialize(component);
     }
 
     private static Pattern getReplaceAllRgbPattern(char colorChar) {
