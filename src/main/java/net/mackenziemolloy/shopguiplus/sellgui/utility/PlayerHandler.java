@@ -1,7 +1,10 @@
 package net.mackenziemolloy.shopguiplus.sellgui.utility;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Locale;
 
+import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.VersionUtility;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -14,13 +17,37 @@ import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
 
 public class PlayerHandler {
 
-    private static Sound getSound(String event) throws IllegalArgumentException {
+    private static Sound getSound(String event) {
         SellGUI plugin = JavaPlugin.getPlugin(SellGUI.class);
         CommentedConfiguration configuration = plugin.getConfiguration();
         String soundPath = String.format(Locale.US, "options.sounds.events.%s", event);
 
         String soundValue = configuration.getString(soundPath);
-        return Sound.valueOf(soundValue);
+
+        try {
+            // Minecraft 1.12 has some older sound class
+            if (VersionUtility.getMinorVersion() < 13) {
+                // Dynamically resolve org.bukkit.Sound
+                Class<?> soundClass = Class.forName("org.bukkit.Sound");
+
+                // Use reflection to call valueOf(String)
+                Method valueOfMethod = soundClass.getMethod("valueOf", String.class);
+                Object soundEnum = valueOfMethod.invoke(null, soundValue);
+
+                return (Sound) soundEnum;
+            }
+
+            return Sound.valueOf(soundValue);
+        } catch (IllegalAccessException | InvocationTargetException | ClassNotFoundException | IllegalArgumentException | NoSuchMethodException ex) {
+            if (configuration.getBoolean("options.sounds.error_notification")) {
+                CommandSender console = Bukkit.getConsoleSender();
+                console.sendMessage(ChatColor.DARK_RED + "[ShopGUIPlus-SellGUI] Invalid Sound for version "
+                  + plugin.getVersion() + " => '" + configuration.getString("options.sounds.events."
+                  + event) + "' (failed) ");
+            }
+
+            return null;
+        }
     }
 
     public static void playSound(Player player, String event) {
@@ -41,17 +68,10 @@ public class PlayerHandler {
             volume = (float) configuration.getDouble("options.sounds.volume");
         }
 
-        try {
-            Location location = player.getLocation();
-            Sound sound = getSound(event);
-            player.playSound(location, sound, volume, pitch);
-        } catch (Exception ex) {
-            if (configuration.getBoolean("options.sounds.error_notification")) {
-                CommandSender console = Bukkit.getConsoleSender();
-                console.sendMessage(ChatColor.DARK_RED + "[ShopGUIPlus-SellGUI] Invalid Sound for version "
-                        + plugin.getVersion() + " => '" + configuration.getString("options.sounds.events."
-                        + event) + "' (failed) ");
-            }
-        }
+        Location location = player.getLocation();
+        Sound sound = getSound(event);
+        if (sound == null) return;
+
+        player.playSound(location, sound, volume, pitch);
     }
 }
