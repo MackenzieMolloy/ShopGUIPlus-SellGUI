@@ -1,31 +1,16 @@
 package net.mackenziemolloy.shopguiplus.sellgui.command;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
-import java.util.logging.Logger;
-
 import com.tcoded.folialib.impl.PlatformScheduler;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
-import net.brcdev.shopgui.ShopGuiPlusApi;
 import net.brcdev.shopgui.ShopGuiPlugin;
+import net.brcdev.shopgui.ShopGuiPlusApi;
 import net.brcdev.shopgui.economy.EconomyType;
 import net.brcdev.shopgui.provider.economy.EconomyProvider;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
+import net.mackenziemolloy.shopguiplus.sellgui.objects.SellResult;
 import net.mackenziemolloy.shopguiplus.sellgui.objects.ShopItemPriceValue;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.*;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.HexColorUtility;
@@ -36,12 +21,8 @@ import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.HoverEvent.Action;
 import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
+import org.bukkit.block.ShulkerBox;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
@@ -53,6 +34,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
@@ -60,8 +42,13 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.logging.Logger;
 
 @SuppressWarnings("deprecation")
 public final class CommandSellGUI implements TabExecutor {
@@ -366,6 +353,8 @@ public final class CommandSellGUI implements TabExecutor {
         boolean itemsPlacedInGui = false;
 
         Inventory inventory = event.getInventory();
+        List<ItemStack> shulkerToReturn = new LinkedList<>();
+
         for (int a = 0; a < inventory.getSize(); a++) {
             ItemStack i = inventory.getItem(a);
 
@@ -375,6 +364,22 @@ public final class CommandSellGUI implements TabExecutor {
             }
 
             itemsPlacedInGui = true;
+
+            if (isShulkerBox(i)) {
+                final SellResult shulkerResult = sellShulkerContents(
+                        i,
+                        player,
+                        itemStackSellPriceCache,
+                        soldMap2,
+                        moneyMap
+                );
+
+                totalPrice += shulkerResult.totalPrice();
+                itemAmount += shulkerResult.itemAmount();
+                shulkerToReturn.add(shulkerResult.shulker());
+                continue;
+            }
+
 
             ItemStack singleItem = new ItemStack(i);
             singleItem.setAmount(1);
@@ -407,14 +412,48 @@ public final class CommandSellGUI implements TabExecutor {
                 double totalSold2 = moneyMap.getOrDefault(itemEconomyType, 0.0);
                 double amountSold2 = (totalSold2 + itemSellPrice);
                 moneyMap.put(itemEconomyType, amountSold2);
+
             } else {
                 excessItems = true;
 
                 Location location = player.getLocation().add(0.0D, 0.5D, 0.0D);
                 Map<Integer, ItemStack> fallenItems = event.getPlayer().getInventory().addItem(i);
+
                 scheduler.runAtLocation(location, task -> {
                     World world = player.getWorld();
-                    fallenItems.values().forEach(item -> world.dropItemNaturally(location, item));
+
+                    fallenItems.values().forEach(item ->
+                            world.dropItemNaturally(
+                                    location,
+                                    item)
+                    );
+                });
+            }
+        }
+
+        if (!shulkerToReturn.isEmpty()) {
+
+            final Location location = player.getLocation().add(
+                    0.0D,
+                    0.5D,
+                    0.0D
+            );
+
+            for (ItemStack shulker : shulkerToReturn) {
+
+                final Map<Integer, ItemStack> result = event
+                        .getPlayer()
+                        .getInventory()
+                        .addItem(shulker);
+
+                scheduler.runAtLocation(location, task -> {
+                    final World world = player.getWorld();
+
+                    result.values().forEach(item ->
+                            world.dropItemNaturally(
+                                    location,
+                                    item)
+                    );
                 });
             }
         }
@@ -431,6 +470,7 @@ public final class CommandSellGUI implements TabExecutor {
 
         PlayerHandler.playSound(player, "success");
         StringBuilder formattedPricing = new StringBuilder();
+
         for (Entry<EconomyType, Double> entry : moneyMap.entrySet()) {
             EconomyProvider economyProvider = ShopGuiPlusApi.getPlugin().getEconomyManager()
                     .getEconomyProvider(entry.getKey());
@@ -450,6 +490,7 @@ public final class CommandSellGUI implements TabExecutor {
 
         if (configuration.getInt("options.receipt_type", 0) == 1
                 || configuration.getString("messages.items_sold", "").contains("{list}")) {
+
             for (Entry<ItemStack, Map<Short, Integer>> entry : soldMap2.entrySet()) {
                 for (Entry<Short, Integer> damageEntry : entry.getValue().entrySet()) {
                     @Deprecated
@@ -482,6 +523,7 @@ public final class CommandSellGUI implements TabExecutor {
                     }
 
                     String finalItemNameFormatted = itemNameFormatted;
+
                     String itemLine = getMessage("receipt_item_layout", message -> message
                             .replace("{amount}", String.valueOf(damageEntry.getValue()))
                             .replace("{item}", finalItemNameFormatted)
@@ -495,6 +537,7 @@ public final class CommandSellGUI implements TabExecutor {
 
         String itemAmountFormatted = StringFormatter.getFormattedNumber((double) itemAmount);
         if (configuration.getInt("options.receipt_type", 0) == 1) {
+
             int finalItemAmount = itemAmount;
             StringBuilder finalFormattedPricing1 = formattedPricing;
 
@@ -503,6 +546,7 @@ public final class CommandSellGUI implements TabExecutor {
                     .replace("{receipt}", "")
                     .replace("{list}", String.join(", ", itemList))
                     .replace("{amount}", String.valueOf(finalItemAmount)));
+
             itemsSoldComponent.addExtra(" ");
 
             String receiptHoverMessage = (getMessage("receipt_title", null) + ChatColor.RESET + String.join("\n", receiptList) + ChatColor.RESET);
@@ -535,6 +579,104 @@ public final class CommandSellGUI implements TabExecutor {
         if (configuration.getBoolean("options.action_bar_msgs", false) && minorVersion >= 9) {
             sendActionBar(player, formattedPricing, itemAmountFormatted);
         }
+    }
+
+    private boolean isShulkerBox(ItemStack item) {
+        return item.getType().name().endsWith("SHULKER_BOX");
+    }
+
+    private SellResult sellShulkerContents(ItemStack shulkerItem, Player player, Map<ItemStack, ShopItemPriceValue> priceCache, Map<ItemStack, Map<Short, Integer>> soldMap, Map<EconomyType, Double> moneyMap) {
+        final ItemMeta meta = shulkerItem.getItemMeta();
+
+        if (!(meta instanceof BlockStateMeta bsm) || !(bsm.getBlockState() instanceof ShulkerBox shulkerBox)) {
+            return new SellResult(
+                    0,
+                    0,
+                    shulkerItem
+            );
+        }
+
+        final Inventory shulkerInventory = shulkerBox.getInventory();
+        double totalPrice = 0.0;
+        int totalAmount = 0;
+
+        for (ItemStack contents : shulkerInventory.getContents()) {
+            if (contents == null)
+                continue;
+
+            final double basePrice = ShopGuiPlusApi.getItemStackPriceSell(
+                    player,
+                    contents
+            );
+
+            if (basePrice <= 0.0)
+                continue;
+
+            final ItemStack itemStack = new ItemStack(contents);
+            itemStack.setAmount(1);
+
+            final int amount = contents.getAmount();
+            final short duration = contents.getDurability();
+
+            final double price = Optional.ofNullable(priceCache.get(itemStack))
+                    .map(priceValue ->
+                            priceValue.getSellPrice() * amount)
+
+                    .orElse(basePrice);
+
+            final EconomyType economyType = ShopHandler.getEconomyType(contents);
+
+            priceCache.putIfAbsent(itemStack, new ShopItemPriceValue(
+                    economyType,
+                    price / amount)
+            );
+
+            soldMap.computeIfAbsent(itemStack,
+                    k -> new HashMap<>()).merge(
+                    duration,
+                    amount,
+                    Integer::sum
+            );
+
+            moneyMap.merge(
+                    economyType,
+                    price,
+                    Double::sum
+            );
+
+            totalPrice += price;
+            totalAmount += amount;
+        }
+
+        final Inventory unsellable = Bukkit.createInventory(
+                null,
+                shulkerInventory.getSize()
+        );
+
+        for (ItemStack c : shulkerInventory.getContents()) {
+            if (c != null && ShopGuiPlusApi.getItemStackPriceSell(player, c) <= 0.0) {
+                unsellable.addItem(c);
+            }
+        }
+
+        shulkerBox.getInventory().clear();
+
+        for (ItemStack i : unsellable.getContents()) {
+            if (i != null)
+                shulkerBox.getInventory().addItem(i);
+        }
+
+        bsm.setBlockState(shulkerBox);
+
+        final ItemStack returnShulker = shulkerItem.clone();
+        returnShulker.setAmount(1);
+        returnShulker.setItemMeta(bsm);
+
+        return new SellResult(
+                totalPrice,
+                totalAmount,
+                returnShulker
+        );
     }
 
     private String getMessage(String path, @Nullable Function<String, String> replacer) {
