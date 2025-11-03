@@ -43,7 +43,7 @@ public final class HexColorUtility {
         matcher.appendTail(buffer);
 
         // Normalize Adventure legacy serializers so that colors reset styles (bold/italic/etc.)
-        Component component = LegacyComponentSerializer.legacyAmpersand().deserialize(buffer.toString());
+        Component component = LegacyComponentSerializer.legacySection().deserialize(buffer.toString());
         return LegacyComponentSerializer.legacySection().serialize(component);
     }
 
