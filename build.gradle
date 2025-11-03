@@ -16,7 +16,7 @@ java {
 }
 
 repositories {
-	mavenLocal()
+    mavenLocal()
     mavenCentral()
 
     maven { url = 'https://repo.papermc.io/repository/maven-public/' }
@@ -24,14 +24,14 @@ repositories {
     maven { url = 'https://oss.sonatype.org/content/repositories/snapshots/' }
     maven { url = 'https://repo.codemc.org/repository/maven-public/' }
     maven { url = 'https://jitpack.io/' }
-    maven { url = "https://repo.tcoded.com/releases"}
+    maven { url = "https://repo.tcoded.com/releases" }
 }
 
 dependencies {
-    compileOnly "org.spigotmc:spigot-api:1.21.8-R0.1-SNAPSHOT"
-    compileOnly 'com.github.brcdev-minecraft:shopgui-api:3.0.0'
+    compileOnly "org.spigotmc:spigot-api:1.21.10-R0.1-SNAPSHOT"
+    compileOnly "com.github.brcdev-minecraft:shopgui-api:3.2.0"
     implementation "dev.triumphteam:triumph-gui:3.1.13"
-    implementation 'org.bstats:bstats-bukkit:3.1.0'
+    implementation "org.bstats:bstats-bukkit:3.1.0"
     implementation "com.tcoded:FoliaLib:0.5.1"
 }
 
