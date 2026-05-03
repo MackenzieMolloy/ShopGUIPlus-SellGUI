@@ -23,6 +23,8 @@ import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import net.brcdev.shopgui.ShopGuiPlusApi;
 import net.brcdev.shopgui.ShopGuiPlugin;
+import net.brcdev.shopgui.economy.Currency;
+import net.brcdev.shopgui.economy.EconomyCurrencyType;
 import net.brcdev.shopgui.economy.EconomyType;
 import net.brcdev.shopgui.provider.economy.EconomyProvider;
 import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
@@ -358,7 +360,7 @@ public final class CommandSellGUI implements TabExecutor {
         Map<ItemStack, ShopItemPriceValue> itemStackSellPriceCache = new HashMap<>();
 
         Map<ItemStack, Map<Short, Integer>> soldMap2 = new HashMap<>();
-        Map<EconomyType, Double> moneyMap = new EnumMap<>(EconomyType.class);
+        Map<EconomyCurrencyType, Double> moneyMap = new HashMap<>();
 
         double totalPrice = 0;
         int itemAmount = 0;
@@ -367,35 +369,35 @@ public final class CommandSellGUI implements TabExecutor {
 
         Inventory inventory = event.getInventory();
         for (int a = 0; a < inventory.getSize(); a++) {
-            ItemStack i = inventory.getItem(a);
+            ItemStack itemStack = inventory.getItem(a);
 
             // Quick check for invalid items: null or ignored item
-            if (i == null || ignoredSlotSet.contains(a)) {
+            if (itemStack == null || ignoredSlotSet.contains(a)) {
                 continue;
             }
 
             itemsPlacedInGui = true;
 
-            ItemStack singleItem = new ItemStack(i);
+            ItemStack singleItem = new ItemStack(itemStack);
             singleItem.setAmount(1);
 
-            if (itemStackSellPriceCache.getOrDefault(singleItem, new ShopItemPriceValue(null, 0.0)).getSellPrice() > 0 || ShopGuiPlusApi.getItemStackPriceSell(player, i) > 0) {
-                itemAmount += i.getAmount();
+            if (itemStackSellPriceCache.getOrDefault(singleItem, new ShopItemPriceValue(null, 0.0)).getSellPrice() > 0 || ShopGuiPlusApi.getItemStackPriceSell(player, itemStack) > 0) {
+                itemAmount += itemStack.getAmount();
 
                 @Deprecated
-                short materialDamage = i.getDurability();
-                int amount = i.getAmount();
+                short materialDamage = itemStack.getDurability();
+                int amount = itemStack.getAmount();
 
-                double itemSellPrice = itemStackSellPriceCache.containsKey(singleItem) ? itemStackSellPriceCache.get(singleItem).getSellPrice() * amount : ShopGuiPlusApi.getItemStackPriceSell(player, i);
+                double itemSellPrice = itemStackSellPriceCache.containsKey(singleItem) ? itemStackSellPriceCache.get(singleItem).getSellPrice() * amount : ShopGuiPlusApi.getItemStackPriceSell(player, itemStack);
 
                 totalPrice += itemSellPrice;
 
-                EconomyType itemEconomyType = ShopHandler.getEconomyType(i);
+                EconomyCurrencyType itemEconomyCurrencyType = ShopHandler.getEconomyType(itemStack);
 
-                ItemStack SingleItemStack = new ItemStack(i);
+                ItemStack SingleItemStack = new ItemStack(itemStack);
                 SingleItemStack.setAmount(1);
 
-                itemStackSellPriceCache.putIfAbsent(SingleItemStack, new ShopItemPriceValue(itemEconomyType, itemSellPrice/amount));
+                itemStackSellPriceCache.putIfAbsent(SingleItemStack, new ShopItemPriceValue(itemEconomyCurrencyType, itemSellPrice/amount));
 
                 Map<Short, Integer> totalSold = soldMap2.getOrDefault(SingleItemStack, new HashMap<>());
                 int totalSoldCount = totalSold.getOrDefault(materialDamage, 0);
@@ -404,14 +406,14 @@ public final class CommandSellGUI implements TabExecutor {
                 totalSold.put(materialDamage, amountSold);
                 soldMap2.put(SingleItemStack, totalSold);
 
-                double totalSold2 = moneyMap.getOrDefault(itemEconomyType, 0.0);
+                double totalSold2 = moneyMap.getOrDefault(itemEconomyCurrencyType, 0.0);
                 double amountSold2 = (totalSold2 + itemSellPrice);
-                moneyMap.put(itemEconomyType, amountSold2);
+                moneyMap.put(itemEconomyCurrencyType, amountSold2);
             } else {
                 excessItems = true;
 
                 Location location = player.getLocation().add(0.0D, 0.5D, 0.0D);
-                Map<Integer, ItemStack> fallenItems = event.getPlayer().getInventory().addItem(i);
+                Map<Integer, ItemStack> fallenItems = event.getPlayer().getInventory().addItem(itemStack);
                 scheduler.runAtLocation(location, task -> {
                     World world = player.getWorld();
                     fallenItems.values().forEach(item -> world.dropItemNaturally(location, item));
@@ -431,12 +433,15 @@ public final class CommandSellGUI implements TabExecutor {
 
         PlayerHandler.playSound(player, "success");
         StringBuilder formattedPricing = new StringBuilder();
-        for (Entry<EconomyType, Double> entry : moneyMap.entrySet()) {
+        for (Entry<EconomyCurrencyType, Double> entry : moneyMap.entrySet()) {
             EconomyProvider economyProvider = ShopGuiPlusApi.getPlugin().getEconomyManager()
-                    .getEconomyProvider(entry.getKey());
-            economyProvider.deposit(player, entry.getValue());
-            formattedPricing.append(economyProvider.getCurrencyPrefix()).append(StringFormatter
-                            .getFormattedNumber(entry.getValue())).append(economyProvider.getCurrencySuffix())
+                    .getEconomyProvider(entry.getKey().getEconomyProviderId());
+
+            Currency currency = economyProvider.getCurrency(entry.getKey().getCurrencyId());
+
+            currency.deposit(player.getUniqueId(), entry.getValue());
+            formattedPricing.append(currency.getPrefix(entry.getValue())).append(StringFormatter
+                            .getFormattedNumber(entry.getValue())).append(currency.getSuffix(entry.getValue()))
                     .append(", ");
         }
 
@@ -455,14 +460,14 @@ public final class CommandSellGUI implements TabExecutor {
                     @Deprecated
                     ItemStack materialItemStack = entry.getKey();
 
+                    EconomyCurrencyType economyCurrencyType = ShopHandler.getEconomyType(materialItemStack);
+                    Currency currency = ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(economyCurrencyType.getEconomyProviderId()).getCurrency(economyCurrencyType.getCurrencyId());
+
                     double profits = ShopGuiPlusApi.getItemStackPriceSell(player, materialItemStack)
                             * damageEntry.getValue();
-                    String profitsFormatted = ShopGuiPlusApi.getPlugin().getEconomyManager()
-                            .getEconomyProvider(ShopHandler.getEconomyType(materialItemStack))
-                            .getCurrencyPrefix() + StringFormatter.getFormattedNumber(profits)
-                            + ShopGuiPlusApi.getPlugin().getEconomyManager().getEconomyProvider(
-                                    ShopHandler.getEconomyType(materialItemStack))
-                            .getCurrencySuffix();
+
+                    String profitsFormatted = currency.getPrefix(profits) + StringFormatter.getFormattedNumber(profits)
+                            + currency.getSuffix(profits);
 
                     String itemNameFormatted = StringFormatter.capitalize(materialItemStack.getType()
                             .name().replace("AETHER_LEGACY_", "")

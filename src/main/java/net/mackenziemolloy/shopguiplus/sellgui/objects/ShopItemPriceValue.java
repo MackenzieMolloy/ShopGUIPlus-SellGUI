@@ -1,19 +1,20 @@
 package net.mackenziemolloy.shopguiplus.sellgui.objects;
 
+import net.brcdev.shopgui.economy.EconomyCurrencyType;
 import net.brcdev.shopgui.economy.EconomyType;
 
 public class ShopItemPriceValue {
 
-  private final EconomyType economyType;
+  private final EconomyCurrencyType economyCurrencyType;
   private final double sellPrice;
 
-  public ShopItemPriceValue(EconomyType economyType, double sellPrice) {
-    this.economyType = economyType;
+  public ShopItemPriceValue(EconomyCurrencyType economyCurrencyType, double sellPrice) {
+    this.economyCurrencyType = economyCurrencyType;
     this.sellPrice = sellPrice;
   }
 
-  public EconomyType getEconomyType() {
-    return economyType;
+  public EconomyCurrencyType getEconomyCurrencyType() {
+    return economyCurrencyType;
   }
 
   public double getSellPrice() {

@@ -3,6 +3,7 @@ package net.mackenziemolloy.shopguiplus.sellgui.utility;
 import java.text.DecimalFormat;
 import java.util.Locale;
 
+import net.brcdev.shopgui.economy.EconomyCurrencyType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -17,24 +18,10 @@ import org.jetbrains.annotations.NotNull;
 public class ShopHandler {
 
     @NotNull
-    public static EconomyType getEconomyType(ItemStack material) {
-        EconomyType economyType = ShopGuiPlusApi.getItemStackShop(material).getEconomyType();
-        if (economyType != null) {
-            return economyType;
-        }
+    public static EconomyCurrencyType getEconomyType(ItemStack itemStack) {
+        EconomyCurrencyType economyCurrencyType = ShopGuiPlusApi.getItemStackShop(itemStack).getEconomyCurrencyType();
 
-        EconomyManager economyManager = ShopGuiPlusApi.getPlugin().getEconomyManager();
-        EconomyProvider defaultEconomyProvider = economyManager.getDefaultEconomyProvider();
-        if (defaultEconomyProvider != null) {
-            String defaultEconomyTypeName = defaultEconomyProvider.getName().toUpperCase(Locale.US);
-            try {
-                return EconomyType.valueOf(defaultEconomyTypeName);
-            } catch (IllegalArgumentException ex) {
-                return EconomyType.CUSTOM;
-            }
-        }
-
-        return EconomyType.CUSTOM;
+        return economyCurrencyType;
     }
 
     public static Double getItemSellPrice(ItemStack material, Player player) {
@@ -58,5 +45,9 @@ public class ShopHandler {
         }
 
         return priceToReturn;
+    }
+
+    public static String getCurrencyId(EconomyCurrencyType economyCurrencyType) {
+        return economyCurrencyType.getEconomyProviderId() +  "-" + economyCurrencyType.getCurrencyId();
     }
 }
