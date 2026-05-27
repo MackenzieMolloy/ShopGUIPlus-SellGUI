@@ -362,7 +362,7 @@ public final class CommandSellGUI implements TabExecutor {
 
         double totalPrice = 0;
         int itemAmount = 0;
-        boolean excessItems = false;
+        List<ItemStack> droppedItems = new ArrayList<>();
         boolean itemsPlacedInGui = false;
 
         Inventory inventory = event.getInventory();
@@ -408,19 +408,17 @@ public final class CommandSellGUI implements TabExecutor {
                 double amountSold2 = (totalSold2 + itemSellPrice);
                 moneyMap.put(itemEconomyType, amountSold2);
             } else {
-                excessItems = true;
-
-                Location location = player.getLocation().add(0.0D, 0.5D, 0.0D);
                 Map<Integer, ItemStack> fallenItems = event.getPlayer().getInventory().addItem(i);
-                scheduler.runAtLocation(location, task -> {
-                    World world = player.getWorld();
-                    fallenItems.values().forEach(item -> world.dropItemNaturally(location, item));
-                });
+                droppedItems.addAll(fallenItems.values());
             }
         }
 
-        if (excessItems) {
+        if (!droppedItems.isEmpty()) {
             sendMessage(player, "inventory_full");
+            Location location = player.getLocation().add(0.0D, 0.5D, 0.0D);
+            World world = location.getWorld();
+            scheduler.runAtLocation(location, task ->
+                    droppedItems.forEach(item -> world.dropItemNaturally(location, item)));
         }
 
         if (totalPrice == 0) {
