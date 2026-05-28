@@ -24,6 +24,10 @@ public final class VersionUtility {
     public static @NotNull String getMinecraftVersion() {
         String bukkitVersion = Bukkit.getBukkitVersion();
         int firstDash = bukkitVersion.indexOf('-');
+        if (firstDash < 0) {
+            return bukkitVersion;
+        }
+
         return bukkitVersion.substring(0, firstDash);
     }
 
@@ -56,9 +60,12 @@ public final class VersionUtility {
     public static int getMajorVersion() {
         String majorMinorVersion = getMajorMinorVersion();
         int periodIndex = majorMinorVersion.indexOf('.');
+        if (periodIndex < 0) {
+            return parseLeadingInt(majorMinorVersion);
+        }
 
         String majorString = majorMinorVersion.substring(0, periodIndex);
-        return Integer.parseInt(majorString);
+        return parseLeadingInt(majorString);
     }
 
     /**
@@ -67,9 +74,27 @@ public final class VersionUtility {
     public static int getMinorVersion() {
         String majorMinorVersion = getMajorMinorVersion();
         int periodIndex = majorMinorVersion.indexOf('.');
+        if (periodIndex < 0) {
+            return 0;
+        }
+
         int nextIndex = (periodIndex + 1);
 
         String minorString = majorMinorVersion.substring(nextIndex);
-        return Integer.parseInt(minorString);
+        return parseLeadingInt(minorString);
+    }
+
+    private static int parseLeadingInt(@NotNull String input) {
+        int index = 0;
+        int length = input.length();
+        while (index < length && Character.isDigit(input.charAt(index))) {
+            index++;
+        }
+
+        if (index <= 0) {
+            return 0;
+        }
+
+        return Integer.parseInt(input.substring(0, index));
     }
 }
