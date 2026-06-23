@@ -3,6 +3,8 @@ package net.mackenziemolloy.shopguiplus.sellgui;
 import com.tcoded.folialib.FoliaLib;
 import com.tcoded.folialib.impl.PlatformScheduler;
 import net.mackenziemolloy.shopguiplus.sellgui.command.CommandSellGUI;
+import net.mackenziemolloy.shopguiplus.sellgui.listeners.SellCommandListener;
+import net.mackenziemolloy.shopguiplus.sellgui.utility.CommandRegistrar;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.CommentedConfiguration;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.FileUtils;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.LogFormatter;
@@ -48,6 +50,7 @@ public final class SellGUI extends JavaPlugin {
         scheduler = foliaLib.getScheduler();
 
         new CommandSellGUI(this).register();
+        getServer().getPluginManager().registerEvents(new SellCommandListener(this), this);
         Logger logger = getLogger();
 
         checkCompatibility();
@@ -56,6 +59,7 @@ public final class SellGUI extends JavaPlugin {
         logger.info("Your server is running version '" + this.version + "'.");
 
         generateFiles();
+        new CommandRegistrar(this).registerAliases();
         setupMetrics();
         setupUpdates();
         initLogger();

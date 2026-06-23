@@ -18,6 +18,27 @@
 
 options:
   #
+  # Command Configuration
+  #
+  commands:
+    #
+    # Custom aliases for /sellgui. No-arg alias commands (e.g. /sell) open the GUI.
+    # Aliases with arguments are passed through to other plugins.
+    #
+    aliases:
+      - "sell"
+      - "sg"
+      - "sellg"
+
+  #
+  # Message format:
+  #   legacy     - Standard & color codes (default)
+  #   minimessage - Kyori MiniMessage tags (<red>, <bold>, gradients, etc.)
+  #
+  messages:
+    format: legacy
+
+  #
   # 0 - None
   # 1 - Hover message (Adds "receipt_text" to the end of the message)
   #
