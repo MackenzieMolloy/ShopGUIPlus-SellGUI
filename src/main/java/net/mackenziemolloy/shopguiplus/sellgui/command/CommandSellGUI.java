@@ -408,10 +408,12 @@ public final class CommandSellGUI implements TabExecutor {
                 double amountSold2 = (totalSold2 + itemSellPrice);
                 moneyMap.put(itemEconomyType, amountSold2);
             } else {
-                excessItems = true;
-
                 Location location = player.getLocation().add(0.0D, 0.5D, 0.0D);
                 Map<Integer, ItemStack> fallenItems = event.getPlayer().getInventory().addItem(i);
+
+                // Tracks if items have been dropped ever. '!excessItems' is to prevent the value being set back to false in a future iteration.
+                excessItems = !excessItems && !fallenItems.isEmpty();
+
                 scheduler.runAtLocation(location, task -> {
                     World world = player.getWorld();
                     fallenItems.values().forEach(item -> world.dropItemNaturally(location, item));
@@ -419,6 +421,7 @@ public final class CommandSellGUI implements TabExecutor {
             }
         }
 
+        // Sends warning message regarding items being dropped on the floor due to insufficient inventory space
         if (excessItems) {
             sendMessage(player, "inventory_full");
         }
