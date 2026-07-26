@@ -26,16 +26,17 @@ import net.brcdev.shopgui.ShopGuiPlugin;
 import net.brcdev.shopgui.economy.EconomyType;
 import net.brcdev.shopgui.provider.economy.EconomyProvider;
 import net.mackenziemolloy.shopguiplus.sellgui.SellGUI;
+import net.mackenziemolloy.shopguiplus.sellgui.event.SellGUIItemsSoldEvent;
 import net.mackenziemolloy.shopguiplus.sellgui.objects.ShopItemPriceValue;
+import net.mackenziemolloy.shopguiplus.sellgui.objects.SoldItemEntry;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.*;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.HexColorUtility;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.MessageUtility;
 import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.VersionUtility;
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.HoverEvent.Action;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -60,8 +61,8 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+
+import java.time.Duration;
 
 @SuppressWarnings("deprecation")
 public final class CommandSellGUI implements TabExecutor {
@@ -95,8 +96,14 @@ public final class CommandSellGUI implements TabExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String @NotNull [] args) {
         if (!plugin.compatible) {
-            String message = MessageUtility.color("&7\n&7\n&a&lUPDATE REQUIRED \n&7\n&7Unfortunately &fSellGUI &7will not work until you update &cShopGUIPlus&7 to version &c1.78.0&7 or above.\n&7\n&eDownload: https://spigotmc.org/resources/6515/\n&7\n&7");
-            sender.sendMessage(message);
+            Component message = MessageUtility.toComponent(
+                    "&7\n&7\n&a&lUPDATE REQUIRED \n&7\n&7Unfortunately &fSellGUI &7will not work until you update &cShopGUIPlus&7 to version &c1.78.0&7 or above.\n&7\n&eDownload: https://spigotmc.org/resources/6515/\n&7\n&7",
+                    false);
+            if (sender instanceof Player player) {
+                audience(player).sendMessage(message);
+            } else {
+                sender.sendMessage(MessageUtility.toPlainText(message));
+            }
             return false;
         }
 
@@ -127,6 +134,8 @@ public final class CommandSellGUI implements TabExecutor {
 
             if (!this.plugin.getConfiguration().getBoolean("options.transaction_log.enabled", false)) this.plugin.closeLogger();
             else if (this.plugin.fileLogger == null) this.plugin.initLogger();
+
+            new CommandRegistrar(this.plugin).registerAliases();
 
             sendMessage(sender, "reloaded_config");
             if (sender instanceof Player player) {
@@ -208,8 +217,7 @@ public final class CommandSellGUI implements TabExecutor {
             guiSize = 6;
         }
 
-        String sellGuiTitle = getMessage("sellgui_title", null);
-        Component sellGuiTitleComponent = LegacyComponentSerializer.legacySection().deserialize(sellGuiTitle);
+        Component sellGuiTitleComponent = getComponent("sellgui_title", null);
         Gui gui = Gui.gui().title(sellGuiTitleComponent).rows(guiSize).create();
         PlayerHandler.playSound(player, "open");
 
@@ -448,6 +456,13 @@ public final class CommandSellGUI implements TabExecutor {
                     formattedPricing.length() - 2));
         }
 
+        Bukkit.getPluginManager().callEvent(new SellGUIItemsSoldEvent(
+                player,
+                buildSoldItemEntries(soldMap2, itemStackSellPriceCache),
+                moneyMap,
+                totalPrice,
+                itemAmount));
+
         List<String> receiptList = new LinkedList<>();
         List<String> itemList = new LinkedList<>();
 
@@ -485,12 +500,11 @@ public final class CommandSellGUI implements TabExecutor {
                     }
 
                     String finalItemNameFormatted = itemNameFormatted;
-                    String itemLine = getMessage("receipt_item_layout", message -> message
+                    String finalProfitsFormatted = profitsFormatted;
+                    receiptList.add(getMessage("receipt_item_layout", message -> message
                             .replace("{amount}", String.valueOf(damageEntry.getValue()))
                             .replace("{item}", finalItemNameFormatted)
-                            .replace("{price}", profitsFormatted));
-
-                    receiptList.add(itemLine);
+                            .replace("{price}", finalProfitsFormatted)));
                     itemList.add(itemNameFormatted);
                 }
             }
@@ -501,22 +515,22 @@ public final class CommandSellGUI implements TabExecutor {
             int finalItemAmount = itemAmount;
             StringBuilder finalFormattedPricing1 = formattedPricing;
 
-            TextComponent itemsSoldComponent = getTextComponentMessage("items_sold", message -> message
+            Component itemsSoldComponent = getComponent("items_sold", message -> message
                     .replace("{earning}", finalFormattedPricing1)
                     .replace("{receipt}", "")
                     .replace("{list}", String.join(", ", itemList))
                     .replace("{amount}", String.valueOf(finalItemAmount)));
-            itemsSoldComponent.addExtra(" ");
 
-            String receiptHoverMessage = (getMessage("receipt_title", null) + ChatColor.RESET + String.join("\n", receiptList) + ChatColor.RESET);
+            Component receiptHover = getComponent("receipt_title", null);
+            for (String receiptLine : receiptList) {
+                receiptHover = receiptHover.append(Component.newline())
+                        .append(MessageUtility.toComponent(receiptLine, useMiniMessage()));
+            }
 
-            TextComponent receiptNameComponent = getTextComponentMessage("receipt_text", null);
-            BaseComponent[] hoverEventComponents = TextComponent.fromLegacyText(receiptHoverMessage);
+            Component receiptNameComponent = getComponent("receipt_text", null)
+                    .hoverEvent(HoverEvent.showText(receiptHover));
 
-            HoverEvent hoverEvent = new HoverEvent(Action.SHOW_TEXT, hoverEventComponents);
-            receiptNameComponent.setHoverEvent(hoverEvent);
-
-            sendMessage(player, Arrays.asList(itemsSoldComponent, receiptNameComponent));
+            sendMessage(player, itemsSoldComponent.append(Component.space()).append(receiptNameComponent));
         } else {
             StringBuilder finalFormattedPricing = formattedPricing;
             sendMessage(player, "items_sold", message -> message.replace("{earning}",
@@ -540,33 +554,47 @@ public final class CommandSellGUI implements TabExecutor {
         }
     }
 
-    private String getMessage(String path, @Nullable Function<String, String> replacer) {
+    private List<SoldItemEntry> buildSoldItemEntries(
+            Map<ItemStack, Map<Short, Integer>> soldMap,
+            Map<ItemStack, ShopItemPriceValue> priceCache) {
+        List<SoldItemEntry> soldItems = new ArrayList<>();
+        for (Entry<ItemStack, Map<Short, Integer>> entry : soldMap.entrySet()) {
+            ItemStack item = entry.getKey();
+            ShopItemPriceValue priceValue = priceCache.get(item);
+            if (priceValue == null) {
+                continue;
+            }
+
+            for (Entry<Short, Integer> damageEntry : entry.getValue().entrySet()) {
+                int amount = damageEntry.getValue();
+                double totalItemPrice = priceValue.getSellPrice() * amount;
+                soldItems.add(new SoldItemEntry(item, amount, totalItemPrice, priceValue.getEconomyType()));
+            }
+        }
+        return soldItems;
+    }
+
+    private boolean useMiniMessage() {
+        String format = this.plugin.getConfiguration().getString("options.messages.format", "legacy");
+        return MessageUtility.usesMiniMessage(format);
+    }
+
+    private Component getComponent(String path, @Nullable Function<String, String> replacer) {
         CommentedConfiguration configuration = this.plugin.getConfiguration();
         String message = configuration.getString("messages." + path, "");
         if (message.isEmpty()) {
-            return "";
+            return Component.empty();
         }
 
         if (replacer != null) {
             message = replacer.apply(message);
         }
 
-        return MessageUtility.color(HexColorUtility.replaceHexColors('&', message));
+        return MessageUtility.toComponent(message, useMiniMessage());
     }
 
-    private TextComponent getTextComponentMessage(String path, @Nullable Function<String, String> replacer) {
-        String message = getMessage(path, replacer);
-        if (message.isEmpty()) {
-            return new TextComponent("");
-        } else {
-            BaseComponent[] components = TextComponent.fromLegacyText(message);
-            TextComponent root = new TextComponent("");
-            for (BaseComponent component : components) {
-                root.addExtra(component);
-            }
-
-            return root;
-        }
+    private String getMessage(String path, @Nullable Function<String, String> replacer) {
+        return MessageUtility.toPlainText(getComponent(path, replacer));
     }
 
     private void sendMessage(CommandSender sender, String path) {
@@ -574,45 +602,45 @@ public final class CommandSellGUI implements TabExecutor {
     }
 
     private void sendMessage(CommandSender sender, String path, @Nullable Function<String, String> replacer) {
-        String message = getMessage(path, replacer);
-        if (message.isEmpty()) {
+        Component message = getComponent(path, replacer);
+        if (Component.empty().equals(message)) {
             return;
         }
 
         if (sender instanceof Player player) {
-            BaseComponent[] components = TextComponent.fromLegacyText(message);
-            player.spigot().sendMessage(components);
+            audience(player).sendMessage(message);
         } else {
-            sender.sendMessage(message);
+            sender.sendMessage(MessageUtility.toPlainText(message));
         }
     }
 
-    private void sendMessage(Player player, List<TextComponent> textComponents) {
-        boolean isTextPresent = textComponents.stream()
-                .anyMatch(component -> component.getText() != null && !component.getText().isEmpty()
-                        || component.getExtra() != null && !component.getExtra().isEmpty());
-
-        if (!isTextPresent) {
+    private void sendMessage(Player player, Component message) {
+        if (Component.empty().equals(message)) {
             return;
         }
 
-        player.spigot().sendMessage(textComponents.toArray(new BaseComponent[0]));
+        audience(player).sendMessage(message);
     }
 
     private void sendSellTitles(Player player, CharSequence price, String amount) {
         Function<String, String> replacer = message -> message.replace("{earning}", price)
                 .replace("{amount}", amount);
 
-        String title = getMessage("sell_title", replacer);
-        String subtitle = getMessage("sell_subtitle", replacer);
-        player.sendTitle(title, subtitle);
+        Title title = Title.title(
+                getComponent("sell_title", replacer),
+                getComponent("sell_subtitle", replacer),
+                Title.Times.times(Duration.ofMillis(500), Duration.ofSeconds(3), Duration.ofMillis(500)));
+        audience(player).showTitle(title);
     }
 
     private void sendActionBar(Player player, CharSequence price, String amount) {
         Function<String, String> replacer = message -> message.replace("{earning}", price)
                 .replace("{amount}", amount);
 
-        TextComponent message = getTextComponentMessage("action_bar_items_sold", replacer);
-        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, message);
+        audience(player).sendActionBar(getComponent("action_bar_items_sold", replacer));
+    }
+
+    private static Audience audience(Player player) {
+        return (Audience) player;
     }
 }

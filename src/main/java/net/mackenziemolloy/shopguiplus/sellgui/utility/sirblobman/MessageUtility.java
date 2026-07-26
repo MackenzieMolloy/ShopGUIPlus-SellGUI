@@ -4,17 +4,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.jetbrains.annotations.NotNull;
 
 public final class MessageUtility {
+
+    private static final LegacyComponentSerializer LEGACY_SECTION = LegacyComponentSerializer.legacySection();
+    private static final LegacyComponentSerializer LEGACY_AMPERSAND = LegacyComponentSerializer.legacyAmpersand();
+    private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
 
     /**
      * @param message The message that will be colored
      * @return A new string containing {@code message} but with the color codes replaced,
      * or an empty string if {@code message} was {@code null}.
-     * @see org.bukkit.ChatColor#translateAlternateColorCodes(char, String)
-     * @see net.md_5.bungee.api.ChatColor#translateAlternateColorCodes(char, String)
-     * @see HexColorUtility#replaceHexColors(char, String)
      */
     public static @NotNull String color(@NotNull String message) {
         try {
@@ -23,6 +27,23 @@ public final class MessageUtility {
         } catch (ReflectiveOperationException ex) {
             return org.bukkit.ChatColor.translateAlternateColorCodes('&', message);
         }
+    }
+
+    public static boolean usesMiniMessage(@NotNull String format) {
+        return "minimessage".equalsIgnoreCase(format.trim());
+    }
+
+    public static @NotNull Component toComponent(@NotNull String message, boolean useMiniMessage) {
+        String processed = HexColorUtility.replaceHexColors('&', message);
+        if (useMiniMessage) {
+            return MINI_MESSAGE.deserialize(processed);
+        }
+
+        return LEGACY_SECTION.deserialize(color(processed));
+    }
+
+    public static @NotNull String toPlainText(@NotNull Component component) {
+        return LEGACY_SECTION.serialize(component);
     }
 
     /**
@@ -44,8 +65,6 @@ public final class MessageUtility {
     /**
      * @param messageList The iterable of messages that will be colored
      * @return A {@code List<String>} containing every message in the input iterable, but with color codes replaced.
-     * @see List
-     * @see java.util.Collection
      */
     public static @NotNull List<String> colorList(@NotNull Iterable<String> messageList) {
         List<String> colorList = new ArrayList<>();
@@ -69,12 +88,6 @@ public final class MessageUtility {
     /**
      * Copies all elements from the iterable collection of originals to a
      * new {@link List}
-     *
-     * @param token     String to search for
-     * @param originals An iterable collection of strings to filter.
-     * @return the list of all matches.
-     * @throws IllegalArgumentException if any parameter is null
-     * @throws IllegalArgumentException if originals contains a null element.
      */
     public static @NotNull List<String> getMatches(@NotNull String token, @NotNull Iterable<String> originals) {
         List<String> collection = new ArrayList<>();
@@ -87,18 +100,6 @@ public final class MessageUtility {
         return collection;
     }
 
-    /**
-     * This method uses a region to check case-insensitive equality. This
-     * means the internal array does not need to be copied like a
-     * toLowerCase() call would.
-     *
-     * @param string String to check
-     * @param prefix Prefix of string to compare
-     * @return true if provided string starts with, an ignoring case, the prefix
-     * provided
-     * @throws NullPointerException     if the prefix is null
-     * @throws IllegalArgumentException if string is null
-     */
     public static boolean startsWithIgnoreCase(@NotNull String string, @NotNull String prefix) {
         if (string.length() < prefix.length()) {
             return false;

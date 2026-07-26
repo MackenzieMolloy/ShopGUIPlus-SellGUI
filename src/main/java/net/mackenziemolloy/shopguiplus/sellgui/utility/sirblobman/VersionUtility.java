@@ -3,6 +3,7 @@ package net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman;
 import java.util.logging.Logger;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
@@ -22,6 +23,11 @@ public final class VersionUtility {
      * @return The current Minecraft version of the server (Example: 1.16.5)
      */
     public static @NotNull String getMinecraftVersion() {
+        String minecraftVersion = getMinecraftVersionFromApi();
+        if (minecraftVersion != null && !minecraftVersion.isEmpty()) {
+            return minecraftVersion;
+        }
+
         String bukkitVersion = Bukkit.getBukkitVersion();
         int firstDash = bukkitVersion.indexOf('-');
         if (firstDash < 0) {
@@ -29,6 +35,14 @@ public final class VersionUtility {
         }
 
         return bukkitVersion.substring(0, firstDash);
+    }
+
+    private static @Nullable String getMinecraftVersionFromApi() {
+        try {
+            return Bukkit.class.getMethod("getMinecraftVersion").invoke(null).toString();
+        } catch (ReflectiveOperationException ignored) {
+            return null;
+        }
     }
 
     /**
