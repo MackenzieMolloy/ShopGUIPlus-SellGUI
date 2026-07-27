@@ -24,7 +24,7 @@ public final class HexColorUtility {
         Pattern pattern = getReplaceAllRgbPattern(colorChar);
         Matcher matcher = pattern.matcher(string);
 
-        StringBuilder buffer = new StringBuilder();
+        StringBuffer buffer = new StringBuffer();
         while (matcher.find()) {
             if (matcher.group(1) != null) {
                 matcher.appendReplacement(buffer, colorChar + "#$2");
@@ -43,7 +43,7 @@ public final class HexColorUtility {
         matcher.appendTail(buffer);
 
         // Normalize Adventure legacy serializers so that colors reset styles (bold/italic/etc.)
-        Component component = LegacyComponentSerializer.legacyAmpersand().deserialize(buffer.toString());
+        Component component = LegacyComponentSerializer.legacySection().deserialize(buffer.toString());
         return LegacyComponentSerializer.legacySection().serialize(component);
     }
 

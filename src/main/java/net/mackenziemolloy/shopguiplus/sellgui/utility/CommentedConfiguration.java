@@ -72,7 +72,9 @@ public final class CommentedConfiguration extends YamlConfiguration {
      *                        config, they will be synced with the resource's config.
      */
     public void syncWithConfig(File file, InputStream resource, String... ignoredSections) throws IOException{
-        if(creationFailure) return;
+        if (creationFailure) {
+            return;
+        }
 
         CommentedConfiguration cfg = loadConfiguration(resource);
         if (syncConfigurationSection(cfg, cfg.getConfigurationSection(""), Arrays.asList(ignoredSections)) && file != null) {
@@ -213,7 +215,7 @@ public final class CommentedConfiguration extends YamlConfiguration {
             contents.append("\n").append(line);
         }
 
-        return contents.isEmpty() ? "" : contents.substring(1);
+        return contents.length() == 0 ? "" : contents.substring(1);
     }
 
     /**

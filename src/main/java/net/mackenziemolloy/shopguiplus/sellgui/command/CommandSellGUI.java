@@ -105,11 +105,16 @@ public final class CommandSellGUI implements TabExecutor {
         }
 
         String sub = args[0].toLowerCase(Locale.US);
-        return switch (sub) {
-            case "rl", "reload" -> commandReload(sender);
-            case "debug", "dump" -> commandDebug(sender);
-            default -> false;
-        };
+        switch (sub) {
+            case "rl":
+            case "reload":
+                return commandReload(sender);
+            case "debug":
+            case "dump":
+                return commandDebug(sender);
+            default:
+                return false;
+        }
     }
 
     private boolean commandReload(CommandSender sender) {
@@ -129,7 +134,8 @@ public final class CommandSellGUI implements TabExecutor {
             else if (this.plugin.fileLogger == null) this.plugin.initLogger();
 
             sendMessage(sender, "reloaded_config");
-            if (sender instanceof Player player) {
+            if (sender instanceof Player) {
+                Player player = (Player) sender;
                 PlayerHandler.playSound(player, "success");
             }
         });
@@ -174,9 +180,12 @@ public final class CommandSellGUI implements TabExecutor {
 
             String message = String.format(Locale.US, pastedDumpMsg, pasteUrl);
             Bukkit.getConsoleSender().sendMessage(message);
-            if (sender instanceof Player) sender.sendMessage(message);
+            if (sender instanceof Player) {
+                sender.sendMessage(message);
+            }
 
-            if (sender instanceof Player player) {
+            if (sender instanceof Player) {
+                Player player = (Player) sender;
                 PlayerHandler.playSound(player, "success");
             }
         } catch (IOException ex) {
@@ -188,10 +197,12 @@ public final class CommandSellGUI implements TabExecutor {
     }
 
     private boolean commandBase(CommandSender sender) {
-        if (!(sender instanceof Player player)) {
+        if (!(sender instanceof Player)) {
             sender.sendMessage(ChatColor.RED + "Only players can execute this command.");
             return true;
         }
+
+        Player player = (Player) sender;
 
         if (!player.hasPermission("sellgui.use")) {
             sendMessage(player, "no_permission");
@@ -579,7 +590,8 @@ public final class CommandSellGUI implements TabExecutor {
             return;
         }
 
-        if (sender instanceof Player player) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
             BaseComponent[] components = TextComponent.fromLegacyText(message);
             player.spigot().sendMessage(components);
         } else {
