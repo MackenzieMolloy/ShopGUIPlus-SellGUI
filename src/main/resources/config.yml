@@ -43,7 +43,7 @@ options:
   #
   # Whether trailing zero decimals should be removed (28.0, 28.00, etc --> 28)
   #
-  remove_trailing_zeros: false
+  remove_trailing_zeros: true
 
   #
   # Should units be abbreviated? E.g.: 1,259 -> 1.25k

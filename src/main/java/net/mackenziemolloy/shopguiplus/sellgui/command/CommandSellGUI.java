@@ -33,6 +33,7 @@ import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.MessageUtility
 import net.mackenziemolloy.shopguiplus.sellgui.utility.sirblobman.VersionUtility;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.HoverEvent.Action;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -514,12 +515,15 @@ public final class CommandSellGUI implements TabExecutor {
                     .replace("{amount}", String.valueOf(finalItemAmount)));
             itemsSoldComponent.addExtra(" ");
 
-            String receiptHoverMessage = (getMessage("receipt_title", null) + ChatColor.RESET + String.join("\n", receiptList) + ChatColor.RESET);
+            ComponentBuilder builder = new ComponentBuilder("");
+            builder.append(getMessage("receipt_title", null));
+            for (String receiptLine : receiptList) {
+                builder.append(receiptLine, ComponentBuilder.FormatRetention.NONE);
+            }
 
             TextComponent receiptNameComponent = getTextComponentMessage("receipt_text", null);
-            BaseComponent[] hoverEventComponents = TextComponent.fromLegacyText(receiptHoverMessage);
 
-            HoverEvent hoverEvent = new HoverEvent(Action.SHOW_TEXT, hoverEventComponents);
+            HoverEvent hoverEvent = new HoverEvent(Action.SHOW_TEXT, builder.create());
             receiptNameComponent.setHoverEvent(hoverEvent);
 
             sendMessage(player, Arrays.asList(itemsSoldComponent, receiptNameComponent));
