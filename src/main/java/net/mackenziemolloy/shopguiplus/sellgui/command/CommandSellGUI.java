@@ -63,6 +63,8 @@ import org.jetbrains.annotations.Nullable;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
+import static net.mackenziemolloy.shopguiplus.sellgui.utility.ClassUtils.hasMethod;
+
 @SuppressWarnings("deprecation")
 public final class CommandSellGUI implements TabExecutor {
 
@@ -451,6 +453,8 @@ public final class CommandSellGUI implements TabExecutor {
         List<String> receiptList = new LinkedList<>();
         List<String> itemList = new LinkedList<>();
 
+        boolean isItemNameMethodAvailable = hasMethod(ItemMeta.class, "getItemName");
+
         if (configuration.getInt("options.receipt_type", 0) == 1
                 || configuration.getString("messages.items_sold", "").contains("{list}")) {
             for (Entry<ItemStack, Map<Short, Integer>> entry : soldMap2.entrySet()) {
@@ -472,12 +476,14 @@ public final class CommandSellGUI implements TabExecutor {
                             .replace("LOST_AETHER_", "")
                             .replace("_", " ").toLowerCase());
 
+                    // Test this on version prior to 1.20.5
                     ItemMeta itemMeta = materialItemStack.getItemMeta();
-                    if (itemMeta != null && itemMeta.hasDisplayName()) {
-                        String displayName = itemMeta.getDisplayName();
-                        if (!displayName.isEmpty()) {
-                            itemNameFormatted = materialItemStack.getItemMeta().getDisplayName();
-                        }
+                    if (itemMeta != null) {
+                        if (itemMeta.hasDisplayName() && !itemMeta.getDisplayName().isEmpty())
+                            itemNameFormatted = itemMeta.getDisplayName();
+
+                        if (isItemNameMethodAvailable && !itemMeta.getItemName().isEmpty())
+                            itemNameFormatted = itemMeta.getItemName();
                     }
 
                     if (minorVersion <= 12 && !configuration.getBoolean("options.show_item_damage", false)) {
