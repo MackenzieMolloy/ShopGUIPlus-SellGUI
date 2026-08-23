@@ -518,7 +518,7 @@ public final class CommandSellGUI implements TabExecutor {
             ComponentBuilder builder = new ComponentBuilder("");
             builder.append(getMessage("receipt_title", null));
             for (String receiptLine : receiptList) {
-                builder.append(receiptLine, ComponentBuilder.FormatRetention.NONE);
+                builder.append("\n" + receiptLine, ComponentBuilder.FormatRetention.NONE);
             }
 
             TextComponent receiptNameComponent = getTextComponentMessage("receipt_text", null);
