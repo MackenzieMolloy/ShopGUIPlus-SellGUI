@@ -18,6 +18,18 @@
 
 options:
   #
+  # Command Configuration
+  #
+  commands:
+    #
+    # Custom aliases for /sellgui
+    #
+    aliases:
+      - "sell"
+      - "sg"
+      - "sellg"
+
+  #
   # 0 - None
   # 1 - Hover message (Adds "receipt_text" to the end of the message)
   #

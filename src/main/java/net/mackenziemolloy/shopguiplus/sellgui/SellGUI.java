@@ -48,6 +48,10 @@ public final class SellGUI extends JavaPlugin {
         scheduler = foliaLib.getScheduler();
 
         new CommandSellGUI(this).register();
+        new net.mackenziemolloy.shopguiplus.sellgui.utility.CommandRegistrar(this).registerAliases();
+        getServer().getPluginManager()
+                .registerEvents(new net.mackenziemolloy.shopguiplus.sellgui.listeners.SellCommandListener(this), this);
+
         Logger logger = getLogger();
 
         checkCompatibility();
